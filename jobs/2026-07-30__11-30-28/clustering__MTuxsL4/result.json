@@ -1,0 +1,119 @@
+{
+    "id": "fec8109f-086d-43de-b69b-074d4798114e",
+    "task_name": "clustering",
+    "trial_name": "clustering__MTuxsL4",
+    "trial_uri": "file:///home/an/Documents/assemple/cluster/jobs/2026-07-30__11-30-28/clustering__MTuxsL4",
+    "task_id": {
+        "path": "clustering"
+    },
+    "source": null,
+    "task_checksum": "9df5efd5d12362d0d167e4615636876cce7d7ef621c3a79029e85ecceb114cc2",
+    "config": {
+        "task": {
+            "path": "clustering",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "clustering__MTuxsL4",
+        "trials_dir": "jobs/2026-07-30__11-30-28",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "terminus-2",
+            "import_path": null,
+            "model_name": "anthropic/@anthropic/claude-opus-4-6",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {},
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {},
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "c253659a-a208-4c37-90e9-3394f95beef5"
+    },
+    "agent_info": {
+        "name": "terminus-2",
+        "version": "2.0.0",
+        "model_info": {
+            "name": "@anthropic/claude-opus-4-6",
+            "provider": "anthropic"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 188424,
+        "n_cache_tokens": 145725,
+        "n_output_tokens": 21349,
+        "cost_usd": 0.8601112500000001,
+        "rollout_details": [],
+        "metadata": {
+            "n_episodes": 11,
+            "api_request_times_msec": [
+                7558.231830596924,
+                6534.631013870239,
+                10812.93249130249,
+                33835.88624000549,
+                56914.992809295654,
+                53160.927057266235,
+                65810.84537506104,
+                18554.37684059143,
+                7242.596626281738,
+                26123.751163482666,
+                22520.44725418091
+            ],
+            "summarization_count": 0
+        }
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 1.0
+        }
+    },
+    "exception_info": null,
+    "started_at": "2026-07-30T04:30:28.953055Z",
+    "finished_at": "2026-07-30T04:38:51.469397Z",
+    "environment_setup": {
+        "started_at": "2026-07-30T04:30:29.221008Z",
+        "finished_at": "2026-07-30T04:32:07.900076Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-07-30T04:32:07.900093Z",
+        "finished_at": "2026-07-30T04:32:10.205906Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-07-30T04:32:10.205965Z",
+        "finished_at": "2026-07-30T04:38:33.016339Z"
+    },
+    "verifier": {
+        "started_at": "2026-07-30T04:38:33.390291Z",
+        "finished_at": "2026-07-30T04:38:40.442894Z"
+    },
+    "step_results": null
+}

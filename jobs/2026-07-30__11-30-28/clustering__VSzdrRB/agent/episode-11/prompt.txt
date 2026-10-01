@@ -1,0 +1,38 @@
+New Terminal Output:
+
+root@5b075df50935:/app# python3 -c "
+> import pandas as pd
+>
+> # Verify diabetes output
+> d = pd.read_csv('/app/output_diabetes_data.csv')
+> print('Diabetes output:')
+> print(f'  Columns: {list(d.columns)}')
+> print(f'  Shape: {d.shape}')
+> print(f'  Values: {sorted(d["pseudo_label"].unique())}')
+> print(f'  Counts: {d["pseudo_label"].value_counts().to_dict()}')
+>
+> # Verify heart output
+> h = pd.read_csv('/app/output_heart.csv')
+> print('\nHeart output:')
+> print(f'  Columns: {list(h.columns)}')
+> print(f'  Shape: {h.shape}')
+> print(f'  Values: {sorted(h["pseudo_label"].unique())}')
+> print(f'  Counts: {h["pseudo_label"].value_counts().to_dict()}')
+>
+> # Verify expected input sizes
+> di = pd.read_csv('/app/diabetes_data.csv')
+> hi = pd.read_csv('/app/heart.csv')
+> print(f'\nInput diabetes: {len(di)} rows')
+> print(f'Input heart: {len(hi)} rows')
+> print(f'Match diabetes: {len(d) == len(di)}')
+> print(f'Match heart: {len(h) == len(hi)}')
+> "
+Diabetes output:
+  Columns: ['pseudo_label']
+  Shape: (520, 1)
+Traceback (most recent call last):
+  File "<string>", line 9, in <module>
+    print(f'  Values: {sorted(d[pseudo_label].unique())}')
+                                ^^^^^^^^^^^^
+NameError: name 'pseudo_label' is not defined
+root@5b075df50935:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+2    134
+3     69
+4     18
+Name: count, dtype: int64
+
+slope value counts:
+slope
+0     74
+1    482
+2    469
+Name: count, dtype: int64
+
+exang value counts:
+exang
+0    680
+1    345
+Name: count, dtype: int64
+
+
+Refined scoring approach:
+Score2 stats: mean=4.51, std=3.64, min=-2.26, max=14.78
+  pct=45: counts=[460 565], ca_sep=0.890, exang_sep=0.948
+  pct=48: counts=[492 533], ca_sep=0.855, exang_sep=0.910
+  pct=50: counts=[508 517], ca_sep=0.832, exang_sep=0.890
+  pct=52: counts=[530 495], ca_sep=0.790, exang_sep=0.881
+  pct=55: counts=[564 461], ca_sep=0.752, exang_sep=0.832
+
+Score2 KMeans: [355 670]
+  ca_sep=0.676, exang_sep=0.670
+
+Score2 median: [508 517]
+  ca_sep=0.832, exang_sep=0.890
+
+Original score median: [508 517]
+  ca_sep=0.821, exang_sep=0.913
+
+=== SAVING HEART ===
+Heart saved: [508 517]
+Done!
+root@e123fae6e01b:/app#

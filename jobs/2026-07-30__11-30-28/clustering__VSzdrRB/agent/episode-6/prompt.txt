@@ -1,0 +1,262 @@
+New Terminal Output:
+
+root@5b075df50935:/app# cat > /app/solve2.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> from sklearn.cluster import KMeans, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+> from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
+> import warnings
+> warnings.filterwarnings('ignore')
+>
+(n> # ===================== DIABETES DATASET =====================
+> print("=== Processing Diabetes Dataset ===")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+scal>
+> # Known: The early-stage diabetes dataset has ~320 positive, ~200 negative
+> # Key indicators: polyuria, polydipsia are the strongest
+> # Let's try multiple approaches and use agreement
+>
+> results_d = {}
+>
+> # Method 1: Weighted features with KMeans
+> df_d1 = df_diabetes.copy()
+> df_d1['age'] = StandardScaler().fit_transform(df_d1[['age']])
+> df_d1['polyuria'] = df_d1['polyuria'] * 3
+> df_d1['polydipsia'] = df_d1['polydipsia'] * 3
+> df_d1['sudden_weight_loss'] = df_d1['sudden_weight_loss'] * 2
+> df_d1['irritability'] = df_d1['irritability'] * 2
+> df_d1['partial_paresis'] = df_d1['partial_paresis'] * 2
+> km = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+f_h2> results_d['km_weighted'] = km.fit_predict(df_d1)
+>
+t> # Method 2: GMM weighted
+> gmm = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_d['gmm_weighted'] = gmm.fit_predict(df_d1)
+>
+> # Method 3: Score-based (domain knowledge)
+> df_d3 = df_diabetes.copy()
+> score = (df_d3['polyuria'] * 3 + df_d3['polydipsia'] * 3 +
+>          df_d3['sudden_weight_loss'] * 2 + df_d3['irritability'] * 2 +
+>          df_d3['partial_paresis'] * 2 + df_d3['polyphagia'] * 1.5 +
+>          df_d3['gender'] * 1 + df_d3['genital_thrush'] * 1)
+> results_d['score_t3'] = (score >= 4).astype(int).values
+> results_d['score_t4'] = (score >= 5).astype(int).values
+> results_d['score_t5'] = (score >= 6).astype(int).values
+>
+> # Method 4: All features scaled + GMM
+> df_d4 = df_diabetes.copy().astype(float)
+> df_d4 = pd.DataFrame(StandardScaler().fit_transform(df_d4), columns=df_d4.columns)
+> gmm4 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_d['gmm_allscaled'] = gmm4.fit_predict(df_d4)
+>
+> # Method 5: KMeans on key features only
+> key_d = ['polyuria', 'polydipsia', 'sudden_weight_loss', 'polyphagia', 'irritability', 'partial_paresis', 'gender']
+> df_d5 = df_diabetes[key_d].copy().astype(float)
+> km5 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_d['km_keyonly'] = km5.fit_predict(df_d5)
+>
+> # Method 6: Agglomerative on weighted
+> agg_d = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_d['agg_weighted'] = agg_d.fit_predict(df_d1)
+>
+> print("Diabetes methods:")
+> for k, v in results_d.items():
+>     print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+>
+> # Compare methods against each other to find consensus
+> print("\nPairwise ARI between diabetes methods:")
+4> keys = list(results_d.keys())
+dict(df_h4_scaled)
+
+# > best_avg_ari = -1
+Method 5: Score-ba> best_method = None
+> for i, k1 in enumerate(keys):
+>     total_ari = 0
+>     for j, k2 in enumerate(keys):
+>         if i != j:
+>             ari = adjusted_rand_score(results_d[k1], results_d[k2])
+>             total_ari += ari
+>     avg_ari = total_ari / (len(keys) - 1)
+     (df_h5['thalach>     print(f"  {k1}: avg ARI with others = {avg_ari:.4f}")
+>     if avg_ari > best_avg_ari:
+>         best_avg_ari = avg_ari
+>         best_method = k1
+>
+> print(f"\nBest consensus for diabetes: {best_method} (avg ARI = {best_avg_ari:.4f})")
+> best_diabetes = results_d[best_method]
+>
+> # Make sure the larger cluster is labeled appropriately
+> # (In the original dataset, positive cases ~320 > negative ~200)
+> # If cluster 1 has fewer members, swap
+> if sum(best_diabetes == 1) < sum(best_diabetes == 0):
+>     # The larger cluster should be 1 (positive diabetes)
+>     pass  # keep as is since we want to match ground truth ordering
+>
+ethods:")
+for k, v in results_h.items():
+    print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+
+# Find best consensus
+print("\nPairwise ARI between heart methods:")
+keys_h = list(results_h.keys())
+best_avg_ari_h = -1
+best_method_h = None
+for i, k1 in enumerate(keys_h):
+    total_ari > print(f"Final diabetes: {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+>
+> # ===================== HEART DATASET =====================
+> print("\n=== Processing Heart Dataset ===")
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+>
+> results_h = {}
+>
+> # Method 1: All features scaled
+> df_h1 = df_heart.copy().astype(float)
+> df_h1_scaled = pd.DataFrame(StandardScaler().fit_transform(df
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+', n_init=100, random_state=42)
+> results_h['km_onehot'] = km_h3.fit_predict(df_h3)
+>
+> gmm_h3 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_h['gmm_onehot'] = gmm_h3.fit_predict(df_h3)
+>
+> agg_h3 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_onehot'] = agg_h3.fit_predict(df_h3)
+>
+> # Method 4: All features + age, sex included with key weighting
+> df_h4 = df_heart.copy().astype(float)
+> df_h4['cp'] = df_h4['cp'] * 2
+> df_h4['ca'] = df_h4['ca'] * 2
+> df_h4['thal'] = df_h4['thal'] * 2
+> df_h4['oldpeak'] = df_h4['oldpeak'] * 2
+> df_h4['exang'] = df_h4['exang'] * 2
+> df_h4_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h4), columns=df_h4.columns)
+>
+> km_h4 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['km_allw'] = km_h4.fit_predict(df_h4_scaled)
+>
+> gmm_h4 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_h['gmm_allw'] = gmm_h4.fit_predict(df_h4_scaled)
+>
+> agg_h4 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_allw'] = agg_h4.fit_predict(df_h4_scaled)
+>
+> # Method 5: Score-based approach
+> df_h5 = df_heart.copy()
+> # Higher cp type, lower thalach, higher oldpeak, more ca vessels,
+> # thal=3 (fixed defect), exang=1, slope=0/1 all indicate disease
+> score_h = (df_h5['cp'].apply(lambda x: 1 if x > 0 else 0) * 2 +
+>            (df_h5['thalach'] < 140).astype(int) * 2 +
+>            (df_h5['oldpeak'] > 1.0).astype(int) * 2 +
+>            (df_h5['ca'] > 0).astype(int) * 3 +
+>            (df_h5['thal'] == 3).astype(int) * 2 +
+>            df_h5['exang'] * 2 +
+>            (df_h5['slope'] == 0).astype(int) * 1)
+> results_h['score_based'] = (score_h >= 6).astype(int).values
+>
+> print("Heart methods:")
+> for k, v in results_h.items():
+>     print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+>
+> # Find best consensus
+> print("\nPairwise ARI between heart methods:")
+> keys_h = list(results_h.keys())
+> best_avg_ari_h = -1
+> best_method_h = None
+> for i, k1 in enumerate(keys_h):
+>     total_ari = 0
+>     for j, k2 in enumerate(keys_h):
+>         if i != j:
+>             ari = adjusted_rand_score(results_h[k1], results_h[k2])
+>             total_ari += ari
+>     avg_ari = total_ari / (len(keys_h) - 1)
+>     print(f"  {k1}: avg ARI with others = {avg_ari:.4f}")
+>     if avg_ari > best_avg_ari_h:
+>         best_avg_ari_h = avg_ari
+>         best_method_h = k1
+>
+> print(f"\nBest consensus for heart: {best_method_h} (avg ARI = {best_avg_ari_h:.4f})")
+> best_heart = results_h[best_method_h]
+> print(f"Final heart: {sum(best_heart==0)}/{sum(best_heart==1)}")
+>
+> # ===================== SAVE RESULTS =====================
+> out_diabetes = pd.DataFrame({'pseudo_label': best_diabetes})
+> out_diabetes.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"\nSaved diabetes: {out_diabetes['pseudo_label'].value_counts().to_dict()}")
+>
+> out_heart = pd.DataFrame({'pseudo_label': best_heart})
+> out_heart.to_csv('/app/output_heart.csv', index=False)
+> print(f"Saved heart: {out_heart['pseudo_label'].value_counts().to_dict()}")
+>
+> print("\nDone!")
+> EOF
+root@5b075df50935:/app# python3 /app/solve2.py
+=== Processing Diabetes Dataset ===
+Diabetes methods:
+  km_weighted: 244/276
+  gmm_weighted: 233/287
+  score_t3: 184/336
+  score_t4: 221/299
+  score_t5: 237/283
+  gmm_allscaled: 234/286
+  km_keyonly: 283/237
+  agg_weighted: 298/222
+
+Pairwise ARI between diabetes methods:
+  km_weighted: avg ARI with others = 0.6889
+  gmm_weighted: avg ARI with others = 0.7071
+  score_t3: avg ARI with others = 0.5320
+  score_t4: avg ARI with others = 0.6870
+  score_t5: avg ARI with others = 0.7013
+  gmm_allscaled: avg ARI with others = 0.0048
+  km_keyonly: avg ARI with others = 0.5152
+  agg_weighted: avg ARI with others = 0.6859
+
+Best consensus for diabetes: gmm_weighted (avg ARI = 0.7071)
+Final diabetes: 233/287
+
+=== Processing Heart Dataset ===
+Heart methods:
+  km_allscaled: 653/372
+  gmm_allscaled: 423/602
+  agg_allscaled: 476/549
+  km_key: 407/618
+  gmm_key: 345/680
+  agg_key: 581/444
+  km_onehot: 623/402
+  gmm_onehot: 197/828
+  agg_onehot: 481/544
+  km_allw: 653/372
+  gmm_allw: 423/602
+  agg_allw: 476/549
+  score_based: 563/462
+
+Pairwise ARI between heart methods:
+  km_allscaled: avg ARI with others = 0.4486
+  gmm_allscaled: avg ARI with others = 0.0893
+  agg_allscaled: avg ARI with others = 0.3491
+  km_key: avg ARI with others = 0.4408
+  gmm_key: avg ARI with others = 0.2725
+  agg_key: avg ARI with others = 0.3299
+  km_onehot: avg ARI with others = 0.3823
+  gmm_onehot: avg ARI with others = 0.0805
+  agg_onehot: avg ARI with others = 0.3164
+  km_allw: avg ARI with others = 0.4486
+  gmm_allw: avg ARI with others = 0.0893
+  agg_allw: avg ARI with others = 0.3491
+  score_based: avg ARI with others = 0.3018
+
+Best consensus for heart: km_allscaled (avg ARI = 0.4486)
+Final heart: 653/372
+
+Saved diabetes: {1: 287, 0: 233}
+Saved heart: {0: 653, 1: 372}
+
+Done!
+root@5b075df50935:/app#

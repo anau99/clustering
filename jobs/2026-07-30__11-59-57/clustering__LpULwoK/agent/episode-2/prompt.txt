@@ -1,0 +1,243 @@
+Current terminal state:
+New Terminal Output:
+
+> PY
+
+=== /app/diabetes_data.csv ===
+shape (520, 16)
+cols ['age', 'gender', 'polyuria', 'polydipsia', 'sudden_weight_loss', 'weakness', 'polyphagia', 'genital_thrush', 'visual_blurring', 'itching', 'irritability',
+ 'delayed_healing', 'partial_paresis', 'muscle_stiffness', 'alopecia', 'obesity']
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+
+[3 rows x 16 columns]
+dtypes
+ age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+missing per col (top)
+Series([], dtype: int64)
+
+=== /app/heart.csv ===
+shape (1025, 13)
+cols ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+dtypes
+ age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+missing per col (top)
+Series([], dtype: int64)
+root@25bde5ee543b:/app# python3 - <<'PY'
+> import pandas as pd
+> paths=['/app/diabetes_data.csv','/app/heart.csv']
+> for path in paths:
+>     df=pd.read_csv(path)
+>     print('===',path,'===')
+>     print('shape:',df.shape)
+>     print('columns:',', '.join(df.columns))
+>     print('head:\n',df.head(2).to_string(index=False))
+>     print('dtypes:',df.dtypes.astype(str).to_dict())
+>     miss=df.isna().sum()
+>     miss=miss[miss>0]
+>     print('missing_cols:',miss.to_dict())
+>     print()
+> PY
+=== /app/diabetes_data.csv ===
+shape: (520, 16)
+columns: age, gender, polyuria, polydipsia, sudden_weight_loss, weakness, polyphagia, genital_thrush, visual_blurring, itching, irritability, delayed_healing, p
+artial_paresis, muscle_stiffness, alopecia, obesity
+head:
+  age gender  polyuria  polydipsia  sudden_weight_loss  weakness  polyphagia  genital_thrush  visual_blurring  itching  irritability  delayed_healing  partial_p
+aresis  muscle_stiffness  alopecia  obesity
+  40   Male         0           1                   0         1           0               0                0        1             0                1
+    0                 1         1        1
+  58   Male         0           0                   0         1           0               0                1        0             0                0
+    1                 0         1        0
+dtypes: {'age': 'int64', 'gender': 'str', 'polyuria': 'int64', 'polydipsia': 'int64', 'sudden_weight_loss': 'int64', 'weakness': 'int64', 'polyphagia': 'int64',
+ 'genital_thrush': 'int64', 'visual_blurring': 'int64', 'itching': 'int64', 'irritability': 'int64', 'delayed_healing': 'int64', 'partial_paresis': 'int64', 'mu
+scle_stiffness': 'int64', 'alopecia': 'int64', 'obesity': 'int64'}
+missing_cols: {}
+
+=== /app/heart.csv ===
+shape: (1025, 13)
+columns: age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal
+head:
+  age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+  52    1   0       125   212    0        1      168      0      1.0      2   2     3
+  53    1   0       140   203    1        0      155      1      3.1      0   0     3
+dtypes: {'age': 'int64', 'sex': 'int64', 'cp': 'int64', 'trestbps': 'int64', 'chol': 'int64', 'fbs': 'int64', 'restecg': 'int64', 'thalach': 'int64', 'exang': '
+int64', 'oldpeak': 'float64', 'slope': 'int64', 'ca': 'int64', 'thal': 'int64'}
+missing_cols: {}
+
+root@25bde5ee543b:/app# cat > /app/run_cluster.py <<'PY'
+> import numpy as np
+> import pandas as pd
+>
+> from sklearn.compose import ColumnTransformer
+> from sklearn.pipeline import Pipeline
+> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+> fr
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+ilhouette_score, calinski_harabasz_score, davies_bouldin_score
+>
+> from sklearn.cluster import KMeans, AgglomerativeClustering, Birch, MiniBatchKMeans, SpectralClustering
+> from sklearn.mixture import GaussianMixture
+>
+> RANDOM_STATE = 42
+>
+>
+> def _score_clustering(X, labels):
+>     # internal metrics; for k=2 silhouette is generally useful
+>     scores = {}
+>     # Some algorithms may produce a single cluster; guard.
+>     if len(set(labels)) < 2:
+>         return {"sil": -1e9, "ch": -1e9, "db": 1e9}
+>     try:
+>         scores["sil"] = float(silhouette_score(X, labels, metric="euclidean"))
+>     except Exception:
+>         scores["sil"] = -1e9
+>     try:
+>         scores["ch"] = float(calinski_harabasz_score(X, labels))
+>     except Exception:
+>         scores["ch"] = -1e9
+>     try:
+>         scores["db"] = float(davies_bouldin_score(X, labels))
+>     except Exception:
+>         scores["db"] = 1e9
+>     return scores
+>
+>
+> def _pick_best(candidates):
+>     # candidates: list of (name, labels, scores)
+>     # Rank: maximize silhouette, maximize CH, minimize DB.
+>     def key(t):
+>         _, _, s = t
+>         return (s.get("sil", -1e9), s.get("ch", -1e9), -s.get("db", 1e9))
+>     return sorted(candidates, key=key, reverse=True)[0]
+>
+>
+> def cluster_dataset(path, categorical_cols, numeric_cols, out_path):
+>     df = pd.read_csv(path)
+>
+>     # Preprocess: impute + encode + scale
+>     cat_pipe = Pipeline([
+>         ("imputer", SimpleImputer(strategy="most_frequent")),
+>         ("ohe", OneHotEncoder(handle_unknown="ignore", sparse_output=False))
+>     ])
+>     num_pipe = Pipeline([
+>         ("imputer", SimpleImputer(strategy="median")),
+>         ("scaler", StandardScaler())
+>     ])
+>
+>     pre = ColumnTransformer([
+>         ("cat", cat_pipe, categorical_cols),
+>         ("num", num_pipe, numeric_cols),
+>     ], remainder="drop")
+>
+>     X = pre.fit_transform(df)
+>     # ensure float64 dense
+>     X = np.asarray(X, dtype=float)
+>
+>     algos = []
+>     algos.append(("kmeans", lambda: KMeans(n_clusters=2, n_init=50, random_state=RANDOM_STATE)))
+>     algos.append(("minibatch", lambda: MiniBatchKMeans(n_clusters=2, random_state=RANDOM_STATE, batch_size=256, n_init=20)))
+>     algos.append(("gmm", lambda: GaussianMixture(n_components=2, covariance_type="full", random_state=RANDOM_STATE, n_init=5)))
+>     algos.append(("agglo_ward", lambda: AgglomerativeClustering(n_clusters=2, linkage="ward")))
+>     algos.append(("birch", lambda: Birch(n_clusters=2)))
+>     # spectral can be expensive; keep but guard
+>     algos.append(("spectral", lambda: SpectralClustering(n_clusters=2, affinity="nearest_neighbors", n_neighbors=min(10, max(2, X.shape[0]-1)), random_state=R
+ANDOM_STATE)))
+>
+>     candidates = []
+>     for name, ctor in algos:
+>         try:
+>             model = ctor()
+>             if isinstance(model, GaussianMixture):
+>                 labels = model.fit_predict(X)
+>             else:
+>                 labels = model.fit_predict(X)
+>             scores = _score_clustering(X, labels)
+>             candidates.append((name, labels, scores))
+>         except Exception as e:
+>             # skip failures
+>             continue
+>
+>     if not candidates:
+>         raise RuntimeError("No clustering candidates succeeded")
+>
+>     best_name, best_labels, best_scores = _pick_best(candidates)
+>
+>     # normalize to {0,1}
+>     best_labels = pd.Series(best_labels).astype(int)
+>     # in case labels are not 0/1
+>     uniq = sorted(best_labels.unique().tolist())
+>     mapping = {u:i for i,u in enumerate(uniq)}
+>     pseudo = best_labels.map(mapping).astype(int)
+>
+>     out = pd.DataFrame({"pseudo_label": pseudo.values})
+>     out.to_csv(out_path, index=False)
+>
+>     print(f"{path} -> {out_path} using {best_name} scores={best_scores} label_counts={pseudo.value_counts().to_dict()}")
+>
+>
+> if __name__ == "__main__":
+>     diabetes_cat = [
+>         'gender','polyuria','polydipsia','sudden_weight_loss','weakness','polyphagia',
+>         'genital_thrush','visual_blurring','itching','irritability','delayed_healing',
+>         'partial_paresis','muscle_stiffness','alopecia','obesity'
+>     ]
+>     diabetes_num = ['age']
+>
+>     heart_cat = ['sex','cp','fbs','restecg','exang','slope','ca','thal']
+>     heart_num = ['trestbps','chol','thalach','oldpeak']
+>
+>     cluster_dataset('/app/diabetes_data.csv', diabetes_cat, diabetes_num, '/app/output_diabetes_data.csv')
+>     cluster_dataset('/app/heart.csv', heart_cat, heart_num, '/app/output_heart.csv')
+> PY
+root@25bde5ee543b:/app# python3 /app/run_cluster.py
+python3 - <<'PY'
+import pandas as pd
+for p in ['/app/output_diabetes_data.csv','/app/output_heart.csv']:
+    df=pd.read_csv(p)
+    print(p, df.shape, df.columns.tolist())
+    print(df['pseudo_label'].value_counts(dropna=False).to_dict())
+    assert df.columns.tolist()==['pseudo_label']
+    assert set(df['pseudo_label'].unique()).issubset({0,1})
+PY
+head -n 5 /app/output_diabetes_data.csv
+head -n 5 /app/output_heart.csv
+
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

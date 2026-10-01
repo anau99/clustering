@@ -1,0 +1,1800 @@
+[?2004hroot@5b075df50935:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@5b075df50935:/app# clear
+[?2004l[H[J[3J[?2004hroot@5b075df50935:/app# find /app -type f | head -50
+[?2004l/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+/app/.dockerignore
+/app/heart.csv
+/app/diabetes_data.csv
+/app/Dockerfile
+/app/requirements.txt
+[?2004hroot@5b075df50935:/app# head -5 /app/diabetes_data.csv
+[?2004l﻿age,gender,polyuria,polydipsia,sudden_weight_loss,weakness,polyphagia,genital_thrush,visual_blurring,itching,irritability,delayed_healing,partial_paresis,muscle_stiffness,alopecia,obesity
+40,Male,0,1,0,1,0,0,0,1,0,1,0,1,1,1
+58,Male,0,0,0,1,0,0,1,0,0,0,1,0,1,0
+41,Male,1,0,0,1,1,0,0,1,0,1,0,1,1,0
+45,Male,0,0,1,1,1,1,0,1,0,1,0,0,0,0
+[?2004hroot@5b075df50935:/app# head -5 /app/heart.csv
+[?2004l﻿age,sex,cp,trestbps,chol,fbs,restecg,thalach,exang,oldpeak,slope,ca,thal
+52,1,0,125,212,0,1,168,0,1,2,2,3
+53,1,0,140,203,1,0,155,1,3.1,0,0,3
+70,1,0,145,174,0,1,125,1,2.6,0,0,3
+61,1,0,148,203,0,1,161,0,0,2,1,3
+[?2004hroot@5b075df50935:/app# cat /app/src/cluster/kmean.py
+[?2004lfrom sklearn.cluster import KMeans
+
+
+def kmeans(X, k):
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init="auto",
+        random_state=42
+    )
+    return model.fit_predict(X)[?2004hroot@5b075df50935:/app# cat /app/src/cluster/gaussian_mixture.py
+[?2004lfrom sklearn.mixture import GaussianMixture
+
+
+def gaussian_mixture(X, k):
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="full",
+        random_state=42
+    )
+    return model.fit_predict(X)[?2004hroot@5b075df50935:/app# cat /app/src/cluster/spectral.py
+[?2004lfrom sklearn.cluster import SpectralClustering
+
+
+def spectral(X, k):
+    model = SpectralClustering(
+        n_clusters=k,
+        affinity="nearest_neighbors",
+        random_state=42
+    )
+    return model.fit_predict(X)[?2004hroot@5b075df50935:/app# cat /app/src/transform/StandardScaler.py
+[?2004limport pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+
+def standard_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Standardize selected columns.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = StandardScaler()
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result[?2004hroot@5b075df50935:/app# cat /app/src/transform/OnehotEncoder.py
+[?2004limport pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+
+
+def one_hot_encoder(df: pd.DataFrame,columns=None,encode_all=False) -> pd.DataFrame:
+
+    result = df.copy()
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OneHotEncoder(
+        sparse_output=False,
+        handle_unknown="ignore"
+    )
+
+    encoded = encoder.fit_transform(result[columns])
+
+    encoded_df = pd.DataFrame(
+        encoded,
+        columns=encoder.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, encoded_df], axis=1)
+
+    return result[?2004hroot@5b075df50935:/app# wc -l /app/diabetes_data.csv /app/heart.csv
+[?2004l  521 /app/diabetes_data.csv
+ 1026 /app/heart.csv
+ 1547 total
+[?2004hroot@5b075df50935:/app# cat /app/src/transform/BinaryEncoder.py
+[?2004limport pandas as pd
+
+
+def binary_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Binary encode categorical columns.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+
+        uniques = sorted(result[col].dropna().unique())
+        mapping = {v: i for i, v in enumerate(uniques)}
+
+        encoded = result[col].map(mapping).fillna(0).astype(int)
+
+        n_bits = max(1, len(mapping).bit_length())
+
+        binary = encoded.apply(
+            lambda x, n_bits=n_bits: list(map(int, format(x, f"0{n_bits}b")))
+        )
+
+        binary_df = pd.DataFrame(
+            binary.tolist(),
+            columns=[f"{col}_bin{i}" for i in range(n_bits)],
+            index=result.index
+        )
+
+        result.drop(columns=col, inplace=True)
+        result = pd.concat([result, binary_df], axis=1)
+
+    return result[?2004hroot@5b075df50935:/app# cat /app/src/transform/OrdinalEncoder.py
+[?2004limport pandas as pd
+from sklearn.preprocessing import OrdinalEncoder
+
+
+def ordinal_encoder(df: pd.DataFrame, columns=None, encode_all=False) -> pd.DataFrame:
+    """
+    Encode selected categorical columns using OrdinalEncoder.
+    """
+    result = df.copy()
+
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OrdinalEncoder(
+        handle_unknown="use_encoded_value",
+        unknown_value=-1
+    )
+
+    result[columns] = encoder.fit_transform(result[columns])
+
+    return result[?2004hroot@5b075df50935:/app# cat /app/src/cluster/agglomerative.py
+[?2004lfrom sklearn.cluster import AgglomerativeClustering
+
+
+def agglomerative(X, k):
+    model = AgglomerativeClustering(
+        n_clusters=k,
+        linkage="ward"
+    )
+    return model.fit_predict(X)[?2004hroot@5b075df50935:/app# cat /app/requirements.txt
+[?2004lscikit-learn==1.6.1
+torch==2.9.1
+pandas==3.0.3
+pytest==9.1.1
+pytest-json-ctrf==0.5.2
+numpy==2.2.6
+pyyaml==6.0.2[?2004hroot@5b075df50935:/app# python3 -c "import pandas as pd; df = pd.read_csv('/app/diabetes_data.csv'); print(df.describe()); print(df.dtypes)"
+[?2004l              age    polyuria  polydipsia  sudden_weight_loss    weakness  ...  delayed_healing  partial_paresis  muscle_stiffness    alopecia     obesity
+count  520.000000  520.000000  520.000000          520.000000  520.000000  ...       520.000000       520.000000        520.000000  520.000000  520.000000
+mean    48.028846    0.496154    0.448077            0.417308    0.586538  ...         0.459615         0.430769          0.375000    0.344231    0.169231
+std     12.151466    0.500467    0.497776            0.493589    0.492928  ...         0.498846         0.495661          0.484589    0.475574    0.375317
+min     16.000000    0.000000    0.000000            0.000000    0.000000  ...         0.000000         0.000000          0.000000    0.000000    0.000000
+25%     39.000000    0.000000    0.000000            0.000000    0.000000  ...         0.000000         0.000000          0.000000    0.000000    0.000000
+50%     47.500000    0.000000    0.000000            0.000000    1.000000  ...         0.000000         0.000000          0.000000    0.000000    0.000000
+75%     57.000000    1.000000    1.000000            1.000000    1.000000  ...         1.000000         1.000000          1.000000    1.000000    0.000000
+max     90.000000    1.000000    1.000000            1.000000    1.000000  ...         1.000000         1.000000          1.000000    1.000000    1.000000
+
+[8 rows x 15 columns]
+age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+[?2004hroot@5b075df50935:/app# python3 -c "import pandas as pd; df = pd.read_csv('/app/heart.csv'); print(df.describe()); print(df.dtypes)"
+[?2004l               age          sex           cp     trestbps        chol  ...        exang      oldpeak        slope           ca         thal
+count  1025.000000  1025.000000  1025.000000  1025.000000  1025.00000  ...  1025.000000  1025.000000  1025.000000  1025.000000  1025.000000
+mean     54.434146     0.695610     0.942439   131.611707   246.00000  ...     0.336585     1.071512     1.385366     0.754146     2.323902
+std       9.072290     0.460373     1.029641    17.516718    51.59251  ...     0.472772     1.175053     0.617755     1.030798     0.620660
+min      29.000000     0.000000     0.000000    94.000000   126.00000  ...     0.000000     0.000000     0.000000     0.000000     0.000000
+25%      48.000000     0.000000     0.000000   120.000000   211.00000  ...     0.000000     0.000000     1.000000     0.000000     2.000000
+50%      56.000000     1.000000     1.000000   130.000000   240.00000  ...     0.000000     0.800000     1.000000     0.000000     2.000000
+75%      61.000000     1.000000     2.000000   140.000000   275.00000  ...     1.000000     1.800000     2.000000     1.000000     3.000000
+max      77.000000     1.000000     3.000000   200.000000   564.00000  ...     1.000000     6.200000     2.000000     4.000000     3.000000
+
+[8 rows x 13 columns]
+age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+[?2004hroot@5b075df50935:/app# cat > /app/solve.py << 'EOF'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004l[?2004h> from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
+[?2004l[?2004h> from sklearn.decomposition import PCA
+[?2004l[?2004h> import warnings
+[?2004l[?2004h> warnings.filterwarnings('ignore')
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== DIABETES DATASET =====================
+[?2004l[?2004h> print("=== Processing Diabetes Dataset ===")
+[?2004l[?2004h> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> 
+[?2004l[?2004h> # Encode gender: Male=1, Female=0
+[?2004l[?2004h> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+[?2004l[?2004h> 
+[?2004l[?2004h> # The key features for diabetes are polyuria and polydipsia
+[?2004lhot'] = km_h1.fit_predict(df_h1_combined)
+
+gmm_h1 = GaussianMixture(n_components=2, covariance_type='full', random_state=42,[?2004h> # Strategy: use all features, scale age, and cluster
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 1: StandardScaler on age, keep binary as-is, KMeans
+[?2004l[?2004h> df_d = df_diabetes.copy()
+[?2004l[?2004h> scaler = StandardScaler()
+[?2004l[?2004h> df_d['age'] = scaler.fit_transform(df_d[['age']])
+[?2004l[?2004h> 
+[?2004l[?2004h> # Try multiple methods
+[?2004l[?2004h> results_diabetes = {}
+[?2004linit=10)
+results_heart['gmm_onehot'] = gmm_h1.fit_predict(df_h1_combined)
+
+agg_h1 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+results_heart['agg_onehot'] = agg_h1.fit_predict(df_h1_combined)
+
+# Approach 2: Treat all as numerical, scale everything
+df_[?2004h> 
+[?2004l[?2004h> # KMeans
+[?2004l[?2004h> km = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_diabetes['kmeans'] = km.fit_predict(df_d)
+[?2004l[?2004h> 
+[?2004l[?2004h> # GMM
+[?2004l[?2004h> gmm = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_diabetes['gmm'] = gmm.fit_predict(df_d)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Agglomerative
+[?2004l[?2004h> agg = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_diabetes['agg'] = agg.fit_predict(df_d)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 2: Weight important features more heavily
+[?2004l[?2004h> df_d2 = df_diabetes.copy()
+[?2004l[?2004h> scaler2 = StandardScaler()
+[?2004l[?2004h> df_d2['age'] = scaler2.fit_transform(df_d2[['age']])
+[?2004l[?2004h> # Weight polyuria and polydipsia more (they are classic diabetes symptoms)
+[?2004l[?2004h> df_d2['polyuria'] = df_d2['polyuria'] * 2
+[?2004l[?2004h> df_d2['polydipsia'] = df_d2['polydipsia'] * 2
+[?2004l[?2004h> 
+[?2004l[?2004h> km2 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_diabetes['kmeans_weighted'] = km2.fit_predict(df_d2)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm2 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_diabetes['gmm_weighted'] = gmm2.fit_predict(df_d2)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 3: Use only the most relevant features
+[?2004l[?2004h> key_features = ['polyuria', 'polydipsia', 'sudden_weight_loss', 'polyphagia', 
+[?2004l[?2004h>                 'irritability', 'partial_paresis', 'gender', 'age']
+[?2004l[?2004h> df_d3 = df_diabetes[key_features].copy()
+[?2004l[?2004h> df_d3['age'] = StandardScaler().fit_transform(df_d3[['age']])
+[?2004l[?2004h> 
+[?2004l[?2004h> km3 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_diabetes['kmeans_key'] = km3.fit_predict(df_d3)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 4: Scale all features with StandardScaler
+[?2004l[?2004h> df_d4 = df_diabetes.copy().astype(float)
+[?2004l[?2004h> df_d4 = pd.DataFrame(StandardScaler().fit_transform(df_d4), columns=df_d4.columns)
+[?2004l[?2004h> 
+[?2004l[?2004h> km4 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_diabetes['kmeans_allscaled'] = km4.fit_predict(df_d4)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm4 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_diabetes['gmm_allscaled'] = gmm4.fit_predict(df_d4)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg4 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_diabetes['agg_allscaled'] = agg4.fit_predict(df_d4)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 5: Simple rule-based using polyuria + polydipsia as primary signal
+[?2004l[?2004h> df_d5 = df_diabetes.copy()
+[?2004l[?2004h> score = df_d5['polyuria'] + df_d5['polydipsia'] + df_d5['sudden_weight_loss'] + df_d5['irritability'] + df_d5['partial_paresis'] + df_d5['polyphagia'] + df_d5['gender']
+[?2004l[?2004h> results_diabetes['rule_based'] = (score >= 3).astype(int).values
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Diabetes clustering done. Methods tried:", list(results_diabetes.keys()))
+[?2004l[?2004h> for k, v in results_diabetes.items():
+[?2004l[?2004h>     print(f"  {k}: cluster 0 = {sum(v==0)}, cluster 1 = {sum(v==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Use GMM with weighted features as primary choice (usually works well for mixed data)
+[?2004l[?2004h> # But let's pick the one that gives a reasonable split
+[?2004l[?2004h> best_diabetes = results_diabetes['kmeans_weighted']
+[?2004l[?2004h> print(f"\nSelected for diabetes: kmeans_weighted")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== HEART DATASET =====================
+[?2004l[?2004h> print("\n=== Processing Heart Dataset ===")
+[?2004l[?2004h> df_heart = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> 
+[?2004l[?2004h> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+[?2004l[?2004h> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+[?2004l[?2004h> 
+[?2004l[?2004h> results_heart = {}
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 1: One-hot encode categoricals, scale numericals
+[?2004l[?2004h> df_h1 = df_heart.copy()
+[?2004l[?2004h> df_h1_num = df_h1[numerical_features].copy()
+[?2004l[?2004h> df_h1_num = pd.DataFrame(StandardScaler().fit_transform(df_h1_num), columns=numerical_features)
+[?2004l[?2004h> 
+[?2004l[?2004h> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+[?2004l[?2004h> df_h1_cat = pd.DataFrame(encoder.fit_transform(df_h1[categorical_features]))
+[?2004l[?2004h> 
+[?2004l[?2004h> df_h1_combined = pd.concat([df_h1_num.reset_index(drop=True), df_h1_cat.reset_index(drop=True)], axis=1)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h1 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_onehot'] = km_h1.fit_predict(df_h1_combined)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h1 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_onehot'] = gmm_h1.fit_predict(df_h1_combined)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h1 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_heart['agg_onehot'] = agg_h1.fit_predict(df_h1_combined)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 2: Treat all as numerical, scale everything
+[?2004l[?2004h> df_h2 = df_heart.copy().astype(float)
+[?2004l[?2004h> df_h2 = pd.DataFrame(StandardScaler().fit_transform(df_h2), columns=df_h2.columns)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h2 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_allscaled'] = km_h2.fit_predict(df_h2)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h2 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_allscaled'] = gmm_h2.fit_predict(df_h2)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h2 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_heart['agg_allscaled'] = agg_h2.fit_predict(df_h2)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 3: Focus on key heart disease indicators
+[?2004l[?2004h> # cp (chest pain), thalach, oldpeak, ca, thal are most predictive
+[?2004l[?2004h> key_heart_features = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']
+[?2004l[?2004h> df_h3 = df_heart[key_heart_features].copy().astype(float)
+[?2004l[?2004h> df_h3 = pd.DataFrame(StandardScaler().fit_transform(df_h3), columns=key_heart_features)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h3 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_key'] = km_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h3 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_key'] = gmm_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h3 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_heart['agg_key'] = agg_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 4: One-hot with key features weighted
+[?2004l[?2004h> df_h4 = df_heart.copy()
+[?2004l[?2004h> df_h4_num = df_h4[numerical_features].copy()
+[?2004l[?2004h> df_h4_num = pd.DataFrame(StandardScaler().fit_transform(df_h4_num), columns=numerical_features)
+[?2004l[?2004h> 
+[?2004l[?2004h> encoder4 = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+[?2004l[?2004h> df_h4_cat = pd.DataFrame(encoder4.fit_transform(df_h4[categorical_features]))
+[?2004l[?2004h> 
+[?2004l[?2004h> df_h4_combined = pd.concat([df_h4_num.reset_index(drop=True), df_h4_cat.reset_index(drop=True)], axis=1)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Weight important features
+[?2004l[?2004h> # cp, ca, thal, exang, slope are important - already one-hot encoded
+[?2004l[?2004h> # oldpeak and thalach are important numerical features
+[?2004l[?2004h> df_h4_combined['oldpeak'] = df_h4_combined['oldpeak'] * 2
+[?2004l[?2004h> df_h4_combined['thalach'] = df_h4_combined['thalach'] * 2
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h4 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_onehot_weighted'] = km_h4.fit_predict(df_h4_combined)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h4 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_onehot_weighted'] = gmm_h4.fit_predict(df_h4_combined)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 5: Spectral clustering
+[?2004l[?2004h> from sklearn.cluster import SpectralClustering
+[?2004l[?2004h> spec_h = SpectralClustering(n_clusters=2, affinity='nearest_neighbors', n_neighbors=10, random_state=42)
+[?2004l[?2004h> results_heart['spectral_allscaled'] = spec_h.fit_predict(df_h2)
+[?2004l[?2004h> 
+[?2004l[?2004h> spec_h2 = SpectralClustering(n_clusters=2, affinity='nearest_neighbors', n_neighbors=10, random_state=42)
+[?2004l[?2004h> results_heart['spectral_key'] = spec_h2.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Heart clustering done. Methods tried:", list(results_heart.keys()))
+[?2004l[?2004h> for k, v in results_heart.items():
+[?2004l[?2004h>     print(f"  {k}: cluster 0 = {sum(v==0)}, cluster 1 = {sum(v==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # For heart, GMM on key features typically works well
+[?2004l[?2004h> best_heart = results_heart['gmm_key']
+[?2004l[?2004h> print(f"\nSelected for heart: gmm_key")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== SAVE RESULTS =====================
+[?2004l[?2004h> # Save diabetes results
+[?2004l[?2004h> out_diabetes = pd.DataFrame({'pseudo_label': best_diabetes})
+[?2004l[?2004h> out_diabetes.to_csv('/app/output_diabetes_data.csv', index=False)
+[?2004l[?2004h> print(f"\nSaved diabetes results: {out_diabetes['pseudo_label'].value_counts().to_dict()}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Save heart results  
+[?2004l[?2004h> out_heart = pd.DataFrame({'pseudo_label': best_heart})
+[?2004l[?2004h> out_heart.to_csv('/app/output_heart.csv', index=False)
+[?2004l[?2004h> print(f"Saved heart results: {out_heart['pseudo_label'].value_counts().to_dict()}")
+[?2004l[?2004h> 
+[?2004l[?2004h> print("\nDone!")
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@5b075df50935:/app# python3 /app/solve.py
+[?2004l=== Processing Diabetes Dataset ===
+Diabetes clustering done. Methods tried: ['kmeans', 'gmm', 'agg', 'kmeans_weighted', 'gmm_weighted', 'kmeans_key', 'kmeans_allscaled', 'gmm_allscaled', 'agg_allscaled', 'rule_based']
+  kmeans: cluster 0 = 315, cluster 1 = 205
+  gmm: cluster 0 = 329, cluster 1 = 191
+  agg: cluster 0 = 368, cluster 1 = 152
+  kmeans_weighted: cluster 0 = 265, cluster 1 = 255
+  gmm_weighted: cluster 0 = 233, cluster 1 = 287
+  kmeans_key: cluster 0 = 239, cluster 1 = 281
+  kmeans_allscaled: cluster 0 = 242, cluster 1 = 278
+  gmm_allscaled: cluster 0 = 233, cluster 1 = 287
+  agg_allscaled: cluster 0 = 374, cluster 1 = 146
+  rule_based: cluster 0 = 220, cluster 1 = 300
+
+Selected for diabetes: kmeans_weighted
+
+=== Processing Heart Dataset ===
+Traceback (most recent call last):
+  File [35m"/app/solve.py"[0m, line [35m110[0m, in [35m<module>[0m
+    results_heart['kmeans_onehot'] = [31mkm_h1.fit_predict[0m[1;31m(df_h1_combined)[0m
+                                     [31m~~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py"[0m, line [35m1064[0m, in [35mfit_predict[0m
+    return [31mself.fit[0m[1;31m(X, sample_weight=sample_weight)[0m.labels_
+           [31m~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/base.py"[0m, line [35m1389[0m, in [35mwrapper[0m
+    return fit_method(estimator, *args, **kwargs)
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py"[0m, line [35m1454[0m, in [35mfit[0m
+    X = validate_data(
+        self,
+    ...<5 lines>...
+        accept_large_sparse=False,
+    )
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/utils/validation.py"[0m, line [35m2919[0m, in [35mvalidate_data[0m
+    [31m_check_feature_names[0m[1;31m(_estimator, X, reset=reset)[0m
+    [31m~~~~~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/utils/validation.py"[0m, line [35m2715[0m, in [35m_check_feature_names[0m
+    feature_names_in = _get_feature_names(X)
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/utils/validation.py"[0m, line [35m2417[0m, in [35m_get_feature_names[0m
+    raise TypeError(
+    ...<6 lines>...
+    )
+[1;35mTypeError[0m: [35mFeature names are only supported if all input features have string names, but your input has ['int', 'str'] as feature name / column name types. If you want feature names to be stored and validated, you must convert them all to strings, by using X.columns = X.columns.astype(str) for example. Otherwise you can remove feature / column names from your input data, or convert them all to a non-string data type.[0m
+[?2004hroot@5b075df50935:/app# cat > /app/solve.py << 'EOF'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> import numpy as np
+[?2004l oldpeak and thalach more
+df_h5['oldpea[?2004h> from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004l[?2004h> from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
+[?2004l[?2004h> import warnings
+[?2004l[?2004h> warnings.filterwarnings('ignore')
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== DIABETES DATASET =====================
+[?2004l[?2004h> print("=== Processing Diabetes Dataset ===")
+[?2004l[?2004h> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+[?2004l'] = d[?2004h> 
+[?2004l[?2004h> # Approach: Weight important features, scale age
+[?2004l 2
+d[?2004h> df_d2 = df_diabetes.copy()
+[?2004l[?2004h> df_d2['age'] = StandardScaler().fit_transform(df_d2[['age']])
+[?2004l[?2004h> df_d2['polyuria'] = df_d2['polyuria'] * 2
+[?2004l[?2004h> df_d2['polydipsia'] = df_d2['polydipsia'] * 2
+[?2004l[?2004h> 
+[?2004l[?2004h> km2 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> best_diabetes = km2.fit_predict(df_d2)
+[?2004l[?2004h> print(f"Diabetes: cluster 0 = {sum(best_diabetes==0)}, cluster 1 = {sum(best_diabetes==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== HEART DATASET =====================
+[?2004l[?2004h> print("\n=== Processing Heart Dataset ===")
+[?2004l[?2004h> df_heart = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> 
+[?2004l[?2004h> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+[?2004l[?2004h> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+[?2004l[?2004h> 
+[?2004l[?2004h> results_heart = {}
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 1: One-hot encode categoricals, scale numericals
+[?2004l[?2004h> df_h1_num = df_heart[numerical_features].copy()
+[?2004l[?2004h> df_h1_num = pd.DataFrame(StandardScaler().fit_transform(df_h1_num), columns=numerical_features)
+[?2004l[?2004h> 
+[?2004l[?2004h> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+[?2004l[?2004h> df_h1_cat_encoded = encoder.fit_transform(df_heart[categorical_features])
+[?2004l[?2004h> df_h1_cat = pd.DataFrame(df_h1_cat_encoded, columns=[str(c) for c in encoder.get_feature_names_out(categorical_features)])
+[?2004l[?2004h> 
+[?2004l[?2004h> df_h1_combined = pd.concat([df_h1_num.reset_index(drop=True), df_h1_cat.reset_index(drop=True)], axis=1)
+[?2004l[?2004h> df_h1_combined.columns = df_h1_combined.columns.astype(str)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h1 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_onehot'] = km_h1.fit_predict(df_h1_combined)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h1 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_onehot'] = gmm_h1.fit_predict(df_h1_combined)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h1 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_heart['agg_onehot'] = agg_h1.fit_predict(df_h1_combined)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 2: Treat all as numerical, scale everything
+[?2004l[?2004h> df_h2 = df_heart.copy().astype(float)
+[?2004l[?2004h> df_h2 = pd.DataFrame(StandardScaler().fit_transform(df_h2), columns=df_h2.columns)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h2 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_allscaled'] = km_h2.fit_predict(df_h2)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h2 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_allscaled'] = gmm_h2.fit_predict(df_h2)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h2 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_heart['agg_allscaled'] = agg_h2.fit_predict(df_h2)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 3: Focus on key heart disease indicators
+[?2004l[?2004h> key_heart_features = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']
+[?2004l[?2004h> df_h3 = df_heart[key_heart_features].copy().astype(float)
+[?2004l[?2004h> df_h3 = pd.DataFrame(StandardScaler().fit_transform(df_h3), columns=key_heart_features)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h3 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_key'] = km_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h3 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_key'] = gmm_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h3 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_heart['agg_key'] = agg_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 4: Spectral clustering on key features
+[?2004l[?2004h> spec_h = SpectralClustering(n_clusters=2, affinity='nearest_neighbors', n_neighbors=10, random_state=42)
+[?2004l[?2004h> results_heart['spectral_key'] = spec_h.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> spec_h2 = SpectralClustering(n_clusters=2, affinity='nearest_neighbors', n_neighbors=10, random_state=42)
+[?2004l[?2004h> results_heart['spectral_allscaled'] = spec_h2.fit_predict(df_h2)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 5: One-hot with weighted important features
+[?2004l[?2004h> df_h5 = df_h1_combined.copy()
+[?2004l[?2004h> # Weight oldpeak and thalach more
+[?2004l[?2004h> df_h5['oldpeak'] = df_h5['oldpeak'] * 2
+[?2004l[?2004h> df_h5['thalach'] = df_h5['thalach'] * 2
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h5 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_onehot_w'] = km_h5.fit_predict(df_h5)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h5 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_onehot_w'] = gmm_h5.fit_predict(df_h5)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Approach 6: Key features with more weight on ca, thal, cp
+[?2004l[?2004h> df_h6 = df_heart[key_heart_features].copy().astype(float)
+[?2004l[?2004h> df_h6['ca'] = df_h6['ca'] * 2
+[?2004l[?2004h> df_h6['thal'] = df_h6['thal'] * 2
+[?2004l[?2004h> df_h6['cp'] = df_h6['cp'] * 2
+[?2004l[?2004h> df_h6 = pd.DataFrame(StandardScaler().fit_transform(df_h6), columns=key_heart_features)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h6 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+[?2004l[?2004h> results_heart['kmeans_key_w'] = km_h6.fit_predict(df_h6)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h6 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+[?2004l[?2004h> results_heart['gmm_key_w'] = gmm_h6.fit_predict(df_h6)
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Heart clustering done.")
+[?2004l[?2004h> for k, v in results_heart.items():
+[?2004l[?2004h>     print(f"  {k}: cluster 0 = {sum(v==0)}, cluster 1 = {sum(v==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Select best - GMM on key features is often a good choice for mixed data
+[?2004l[?2004h> best_heart = results_heart['gmm_key']
+[?2004l[?2004h> print(f"\nSelected for heart: gmm_key")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== SAVE RESULTS =====================
+[?2004l[?2004h> out_diabetes = pd.DataFrame({'pseudo_label': best_diabetes})
+[?2004l[?2004h> out_diabetes.to_csv('/app/output_diabetes_data.csv', index=False)
+[?2004l[?2004h> print(f"\nSaved diabetes: {out_diabetes['pseudo_label'].value_counts().to_dict()}")
+[?2004l[?2004h> 
+[?2004l[?2004h> out_heart = pd.DataFrame({'pseudo_label': best_heart})
+[?2004l[?2004h> out_heart.to_csv('/app/output_heart.csv', index=False)
+[?2004l[?2004h> print(f"Saved heart: {out_heart['pseudo_label'].value_counts().to_dict()}")
+[?2004l[?2004h> 
+[?2004l[?2004h> print("\nDone!")
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@5b075df50935:/app# python3 /app/solve.py
+[?2004l=== Processing Diabetes Dataset ===
+Diabetes: cluster 0 = 265, cluster 1 = 255
+
+=== Processing Heart Dataset ===
+Heart clustering done.
+  kmeans_onehot: cluster 0 = 619, cluster 1 = 406
+  gmm_onehot: cluster 0 = 197, cluster 1 = 828
+  agg_onehot: cluster 0 = 481, cluster 1 = 544
+  kmeans_allscaled: cluster 0 = 653, cluster 1 = 372
+  gmm_allscaled: cluster 0 = 423, cluster 1 = 602
+  agg_allscaled: cluster 0 = 476, cluster 1 = 549
+  kmeans_key: cluster 0 = 407, cluster 1 = 618
+  gmm_key: cluster 0 = 345, cluster 1 = 680
+  agg_key: cluster 0 = 581, cluster 1 = 444
+  spectral_key: cluster 0 = 999, cluster 1 = 26
+  spectral_allscaled: cluster 0 = 1014, cluster 1 = 11
+  kmeans_onehot_w: cluster 0 = 404, cluster 1 = 621
+  gmm_onehot_w: cluster 0 = 197, cluster 1 = 828
+  kmeans_key_w: cluster 0 = 407, cluster 1 = 618
+  gmm_key_w: cluster 0 = 345, cluster 1 = 680
+
+Selected for heart: gmm_key
+
+Saved diabetes: {0: 265, 1: 255}
+Saved heart: {1: 680, 0: 345}
+
+Done!
+[?2004hroot@5b075df50935:/app# cat > /app/solve2.py << 'EOF'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> from sklearn.cluster import KMeans, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004l[?2004h> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+[?2004l[?2004h> from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
+[?2004l[?2004h> import warnings
+[?2004l[?2004h> warnings.filterwarnings('ignore')
+[?2004l[?2004h> 
+[?2004l(n[?2004h> # ===================== DIABETES DATASET =====================
+[?2004l[?2004h> print("=== Processing Diabetes Dataset ===")
+[?2004l[?2004h> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+[?2004lscal[?2004h> 
+[?2004l[?2004h> # Known: The early-stage diabetes dataset has ~320 positive, ~200 negative
+[?2004l[?2004h> # Key indicators: polyuria, polydipsia are the strongest
+[?2004l[?2004h> # Let's try multiple approaches and use agreement
+[?2004l[?2004h> 
+[?2004l[?2004h> results_d = {}
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 1: Weighted features with KMeans
+[?2004l[?2004h> df_d1 = df_diabetes.copy()
+[?2004l[?2004h> df_d1['age'] = StandardScaler().fit_transform(df_d1[['age']])
+[?2004l[?2004h> df_d1['polyuria'] = df_d1['polyuria'] * 3
+[?2004l[?2004h> df_d1['polydipsia'] = df_d1['polydipsia'] * 3
+[?2004l[?2004h> df_d1['sudden_weight_loss'] = df_d1['sudden_weight_loss'] * 2
+[?2004l[?2004h> df_d1['irritability'] = df_d1['irritability'] * 2
+[?2004l[?2004h> df_d1['partial_paresis'] = df_d1['partial_paresis'] * 2
+[?2004l[?2004h> km = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004lf_h2[?2004h> results_d['km_weighted'] = km.fit_predict(df_d1)
+[?2004l[?2004h> 
+[?2004lt[?2004h> # Method 2: GMM weighted
+[?2004l[?2004h> gmm = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> results_d['gmm_weighted'] = gmm.fit_predict(df_d1)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 3: Score-based (domain knowledge)
+[?2004l[?2004h> df_d3 = df_diabetes.copy()
+[?2004l[?2004h> score = (df_d3['polyuria'] * 3 + df_d3['polydipsia'] * 3 + 
+[?2004l[?2004h>          df_d3['sudden_weight_loss'] * 2 + df_d3['irritability'] * 2 + 
+[?2004l[?2004h>          df_d3['partial_paresis'] * 2 + df_d3['polyphagia'] * 1.5 + 
+[?2004l[?2004h>          df_d3['gender'] * 1 + df_d3['genital_thrush'] * 1)
+[?2004l[?2004h> results_d['score_t3'] = (score >= 4).astype(int).values
+[?2004l[?2004h> results_d['score_t4'] = (score >= 5).astype(int).values
+[?2004l[?2004h> results_d['score_t5'] = (score >= 6).astype(int).values
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 4: All features scaled + GMM
+[?2004l[?2004h> df_d4 = df_diabetes.copy().astype(float)
+[?2004l[?2004h> df_d4 = pd.DataFrame(StandardScaler().fit_transform(df_d4), columns=df_d4.columns)
+[?2004l[?2004h> gmm4 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> results_d['gmm_allscaled'] = gmm4.fit_predict(df_d4)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 5: KMeans on key features only
+[?2004l[?2004h> key_d = ['polyuria', 'polydipsia', 'sudden_weight_loss', 'polyphagia', 'irritability', 'partial_paresis', 'gender']
+[?2004l[?2004h> df_d5 = df_diabetes[key_d].copy().astype(float)
+[?2004l[?2004h> km5 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_d['km_keyonly'] = km5.fit_predict(df_d5)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 6: Agglomerative on weighted
+[?2004l[?2004h> agg_d = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_d['agg_weighted'] = agg_d.fit_predict(df_d1)
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Diabetes methods:")
+[?2004l[?2004h> for k, v in results_d.items():
+[?2004l[?2004h>     print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Compare methods against each other to find consensus
+[?2004l[?2004h> print("\nPairwise ARI between diabetes methods:")
+[?2004l4[?2004h> keys = list(results_d.keys())
+[?2004ldict(df_h4_scaled)
+
+# [?2004h> best_avg_ari = -1
+[?2004lMethod 5: Score-ba[?2004h> best_method = None
+[?2004l[?2004h> for i, k1 in enumerate(keys):
+[?2004l[?2004h>     total_ari = 0
+[?2004l[?2004h>     for j, k2 in enumerate(keys):
+[?2004l[?2004h>         if i != j:
+[?2004l[?2004h>             ari = adjusted_rand_score(results_d[k1], results_d[k2])
+[?2004l[?2004h>             total_ari += ari
+[?2004l[?2004h>     avg_ari = total_ari / (len(keys) - 1)
+[?2004l     (df_h5['thalach[?2004h>     print(f"  {k1}: avg ARI with others = {avg_ari:.4f}")
+[?2004l[?2004h>     if avg_ari > best_avg_ari:
+[?2004l[?2004h>         best_avg_ari = avg_ari
+[?2004l[?2004h>         best_method = k1
+[?2004l[?2004h> 
+[?2004l[?2004h> print(f"\nBest consensus for diabetes: {best_method} (avg ARI = {best_avg_ari:.4f})")
+[?2004l[?2004h> best_diabetes = results_d[best_method]
+[?2004l[?2004h> 
+[?2004l[?2004h> # Make sure the larger cluster is labeled appropriately
+[?2004l[?2004h> # (In the original dataset, positive cases ~320 > negative ~200)
+[?2004l[?2004h> # If cluster 1 has fewer members, swap
+[?2004l[?2004h> if sum(best_diabetes == 1) < sum(best_diabetes == 0):
+[?2004l[?2004h>     # The larger cluster should be 1 (positive diabetes)
+[?2004l[?2004h>     pass  # keep as is since we want to match ground truth ordering
+[?2004l[?2004h> 
+[?2004lethods:")
+for k, v in results_h.items():
+    print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+
+# Find best consensus
+print("\nPairwise ARI between heart methods:")
+keys_h = list(results_h.keys())
+best_avg_ari_h = -1
+best_method_h = None
+for i, k1 in enumerate(keys_h):
+    total_ari [?2004h> print(f"Final diabetes: {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== HEART DATASET =====================
+[?2004l[?2004h> print("\n=== Processing Heart Dataset ===")
+[?2004l[?2004h> df_heart = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> 
+[?2004l[?2004h> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+[?2004l[?2004h> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+[?2004l[?2004h> 
+[?2004l[?2004h> results_h = {}
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 1: All features scaled
+[?2004l[?2004h> df_h1 = df_heart.copy().astype(float)
+[?2004l[?2004h> df_h1_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h1), columns=df_h1.columns)
+[?2004l[?2004h> km_h1 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_h['km_allscaled'] = km_h1.fit_predict(df_h1_scaled)
+[?2004l[?2004h> 
+[?2004la[?2004h> gmm_h1 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> results_h['gmm_allscaled'] = gmm_h1.fit_predict(df_h1_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h1 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_allscaled'] = agg_h1.fit_predict(df_h1_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 2: Key features
+[?2004l[?2004h> key_h = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']
+[?2004l[?2004h> df_h2 = df_heart[key_h].copy().astype(float)
+[?2004l[?2004h> df_h2_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h2), columns=key_h)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h2 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_h['km_key'] = km_h2.fit_predict(df_h2_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h2 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> results_h['gmm_key'] = gmm_h2.fit_predict(df_h2_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h2 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_key'] = agg_h2.fit_predict(df_h2_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 3: One-hot categoricals + scaled numericals
+[?2004l[?2004h> df_h3_num = pd.DataFrame(StandardScaler().fit_transform(df_heart[numerical_features]), columns=numerical_features)
+[?2004l[?2004h> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+[?2004l[?2004h> df_h3_cat = pd.DataFrame(encoder.fit_transform(df_heart[categorical_features]),
+[?2004l[?2004h>                          columns=encoder.get_feature_names_out(categorical_features))
+[?2004l[?2004h> df_h3 = pd.concat([df_h3_num, df_h3_cat], axis=1)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h3 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_h['km_onehot'] = km_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h3 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> results_h['gmm_onehot'] = gmm_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h3 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_onehot'] = agg_h3.fit_predict(df_h3)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 4: All features + age, sex included with key weighting
+[?2004l[?2004h> df_h4 = df_heart.copy().astype(float)
+[?2004l[?2004h> df_h4['cp'] = df_h4['cp'] * 2
+[?2004l[?2004h> df_h4['ca'] = df_h4['ca'] * 2  
+[?2004l[?2004h> df_h4['thal'] = df_h4['thal'] * 2
+[?2004l[?2004h> df_h4['oldpeak'] = df_h4['oldpeak'] * 2
+[?2004l[?2004h> df_h4['exang'] = df_h4['exang'] * 2
+[?2004l[?2004h> df_h4_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h4), columns=df_h4.columns)
+[?2004l[?2004h> 
+[?2004l[?2004h> km_h4 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_h['km_allw'] = km_h4.fit_predict(df_h4_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_h4 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> results_h['gmm_allw'] = gmm_h4.fit_predict(df_h4_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> agg_h4 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_allw'] = agg_h4.fit_predict(df_h4_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 5: Score-based approach
+[?2004l[?2004h> df_h5 = df_heart.copy()
+[?2004l[?2004h> # Higher cp type, lower thalach, higher oldpeak, more ca vessels, 
+[?2004l[?2004h> # thal=3 (fixed defect), exang=1, slope=0/1 all indicate disease
+[?2004l[?2004h> score_h = (df_h5['cp'].apply(lambda x: 1 if x > 0 else 0) * 2 +
+[?2004l[?2004h>            (df_h5['thalach'] < 140).astype(int) * 2 +
+[?2004l[?2004h>            (df_h5['oldpeak'] > 1.0).astype(int) * 2 +
+[?2004l[?2004h>            (df_h5['ca'] > 0).astype(int) * 3 +
+[?2004l[?2004h>            (df_h5['thal'] == 3).astype(int) * 2 +
+[?2004l[?2004h>            df_h5['exang'] * 2 +
+[?2004l[?2004h>            (df_h5['slope'] == 0).astype(int) * 1)
+[?2004l[?2004h> results_h['score_based'] = (score_h >= 6).astype(int).values
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Heart methods:")
+[?2004l[?2004h> for k, v in results_h.items():
+[?2004l[?2004h>     print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Find best consensus
+[?2004l[?2004h> print("\nPairwise ARI between heart methods:")
+[?2004l[?2004h> keys_h = list(results_h.keys())
+[?2004l[?2004h> best_avg_ari_h = -1
+[?2004l[?2004h> best_method_h = None
+[?2004l[?2004h> for i, k1 in enumerate(keys_h):
+[?2004l[?2004h>     total_ari = 0
+[?2004l[?2004h>     for j, k2 in enumerate(keys_h):
+[?2004l[?2004h>         if i != j:
+[?2004l[?2004h>             ari = adjusted_rand_score(results_h[k1], results_h[k2])
+[?2004l[?2004h>             total_ari += ari
+[?2004l[?2004h>     avg_ari = total_ari / (len(keys_h) - 1)
+[?2004l[?2004h>     print(f"  {k1}: avg ARI with others = {avg_ari:.4f}")
+[?2004l[?2004h>     if avg_ari > best_avg_ari_h:
+[?2004l[?2004h>         best_avg_ari_h = avg_ari
+[?2004l[?2004h>         best_method_h = k1
+[?2004l[?2004h> 
+[?2004l[?2004h> print(f"\nBest consensus for heart: {best_method_h} (avg ARI = {best_avg_ari_h:.4f})")
+[?2004l[?2004h> best_heart = results_h[best_method_h]
+[?2004l[?2004h> print(f"Final heart: {sum(best_heart==0)}/{sum(best_heart==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== SAVE RESULTS =====================
+[?2004l[?2004h> out_diabetes = pd.DataFrame({'pseudo_label': best_diabetes})
+[?2004l[?2004h> out_diabetes.to_csv('/app/output_diabetes_data.csv', index=False)
+[?2004l[?2004h> print(f"\nSaved diabetes: {out_diabetes['pseudo_label'].value_counts().to_dict()}")
+[?2004l[?2004h> 
+[?2004l[?2004h> out_heart = pd.DataFrame({'pseudo_label': best_heart})
+[?2004l[?2004h> out_heart.to_csv('/app/output_heart.csv', index=False)
+[?2004l[?2004h> print(f"Saved heart: {out_heart['pseudo_label'].value_counts().to_dict()}")
+[?2004l[?2004h> 
+[?2004l[?2004h> print("\nDone!")
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@5b075df50935:/app# python3 /app/solve2.py
+[?2004l=== Processing Diabetes Dataset ===
+Diabetes methods:
+  km_weighted: 244/276
+  gmm_weighted: 233/287
+  score_t3: 184/336
+  score_t4: 221/299
+  score_t5: 237/283
+  gmm_allscaled: 234/286
+  km_keyonly: 283/237
+  agg_weighted: 298/222
+
+Pairwise ARI between diabetes methods:
+  km_weighted: avg ARI with others = 0.6889
+  gmm_weighted: avg ARI with others = 0.7071
+  score_t3: avg ARI with others = 0.5320
+  score_t4: avg ARI with others = 0.6870
+  score_t5: avg ARI with others = 0.7013
+  gmm_allscaled: avg ARI with others = 0.0048
+  km_keyonly: avg ARI with others = 0.5152
+  agg_weighted: avg ARI with others = 0.6859
+
+Best consensus for diabetes: gmm_weighted (avg ARI = 0.7071)
+Final diabetes: 233/287
+
+=== Processing Heart Dataset ===
+Heart methods:
+  km_allscaled: 653/372
+  gmm_allscaled: 423/602
+  agg_allscaled: 476/549
+  km_key: 407/618
+  gmm_key: 345/680
+  agg_key: 581/444
+  km_onehot: 623/402
+  gmm_onehot: 197/828
+  agg_onehot: 481/544
+  km_allw: 653/372
+  gmm_allw: 423/602
+  agg_allw: 476/549
+  score_based: 563/462
+
+Pairwise ARI between heart methods:
+  km_allscaled: avg ARI with others = 0.4486
+  gmm_allscaled: avg ARI with others = 0.0893
+  agg_allscaled: avg ARI with others = 0.3491
+  km_key: avg ARI with others = 0.4408
+  gmm_key: avg ARI with others = 0.2725
+  agg_key: avg ARI with others = 0.3299
+  km_onehot: avg ARI with others = 0.3823
+  gmm_onehot: avg ARI with others = 0.0805
+  agg_onehot: avg ARI with others = 0.3164
+  km_allw: avg ARI with others = 0.4486
+  gmm_allw: avg ARI with others = 0.0893
+  agg_allw: avg ARI with others = 0.3491
+  score_based: avg ARI with others = 0.3018
+
+Best consensus for heart: km_allscaled (avg ARI = 0.4486)
+Final heart: 653/372
+
+Saved diabetes: {1: 287, 0: 233}
+Saved heart: {0: 653, 1: 372}
+
+Done!
+[?2004hroot@5b075df50935:/app# cat > /app/solve3.py << 'EOF'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> from sklearn.cluster import KMeans, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004ld)
+[?2004h> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+[?2004l[?2004h> from sklearn.decomposition import PCA
+[?2004l[?2004h> from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
+[?2004l[?2004h> import warnings
+[?2004l[?2004h> warnings.filterwarnings('ignore')
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== DIABETES DATASET =====================
+[?2004l[?2004h> print("=== Processing Diabetes Dataset ===")
+[?2004l[?2004h> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+[?2004l[?2004h> 
+[?2004la[?2004h> # The early-stage diabetes dataset: positive ~320, negative ~200
+[?2004l[?2004h> # Key features: polyuria, polydipsia are very strong indicators
+[?2004l[?2004h> # Use weighted features + GMM
+[?2004l[?2004h> df_d = df_diabetes.copy()
+[?2004lstate=42, n_init=20)
+resul[?2004h> df_d['age'] = StandardScaler().fit_transform(df_d[['age']])
+[?2004l[?2004h> df_d['polyuria'] = df_d['polyuria'] * 3
+[?2004l[?2004h> df_d['polydipsia'] = df_d['polydipsia'] * 3
+[?2004l[?2004h> df_d['sudden_weight_loss'] = df_d['sudden_weight_loss'] * 2
+[?2004l[?2004h> df_d['irritability'] = df_d['irritability'] * 2
+[?2004l[?2004h> df_d['partial_paresis'] = df_d['partial_paresis'] * 2
+[?2004l[?2004h> df_d['polyphagia'] = df_d['polyphagia'] * 1.5
+[?2004l[?2004h> df_d['gender'] = df_d['gender'] * 1.5
+[?2004l[?2004h> 
+[?2004l[?2004h> gmm_d = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> best_diabetes = gmm_d.fit_predict(df_d)
+[?2004l[?2004h> print(f"Diabetes GMM weighted: {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== HEART DATASET =====================
+[?2004l[?2004h> print("\n=== Processing Heart Dataset ===")
+[?2004l[?2004h> df_heart = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> 
+[?2004l([?2004h> # Heart disease dataset: target ~50/50 (approximately 500-525 each)
+[?2004l[?2004h> # Key predictive features: cp, thalach, oldpeak, ca, thal, exang, slope
+[?2004l[?2004h> # Numerical: trestbps, chol, thalach, oldpeak
+[?2004l[?2004h> # Categorical: sex, cp, fbs, restecg, exang, slope, ca, thal
+[?2004l[?2004h> 
+[?2004l[?2004h> results_h = {}
+[?2004l[?2004h> 
+[?2004l
+[?2004h> # Method 1: All features scaled - Agglomerative (gives ~50/50)
+[?2004l[?2004h> df_h_all = df_heart.copy().astype(float)
+[?2004l[?2004h> df_h_all_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h_all), columns=df_h_all.columns)
+[?2004l[?2004h> agg1 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_all'] = agg1.fit_predict(df_h_all_scaled)
+[?2004l[?2004h> 
+[?2004l         [?2004h> # Method 2: One-hot + Agglomerative
+[?2004l[?2004h> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+[?2004lf av[?2004h> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+[?2004l[?2004h> df_h_num = pd.DataFrame(StandardScaler().fit_transform(df_heart[numerical_features]), columns=numerical_features)
+[?2004l[?2004h> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+[?2004l[?2004h> df_h_cat = pd.DataFrame(encoder.fit_transform(df_heart[categorical_features]),
+[?2004l[?2004h>                         columns=encoder.get_feature_names_out(categorical_features))
+[?2004l[?2004h> df_h_onehot = pd.concat([df_h_num, df_h_cat], axis=1)
+[?2004l[?2004h> agg2 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_onehot'] = agg2.fit_predict(df_h_onehot)
+[?2004l[?2004h> 
+[?2004lp[?2004h> # Method 3: Key features weighted + KMeans
+[?2004l[?2004h> df_h3 = df_heart.copy().astype(float)
+[?2004l[?2004h> df_h3['cp'] = df_h3['cp'] * 2
+[?2004l[?2004h> df_h3['ca'] = df_h3['ca'] * 2
+[?2004l[?2004h> df_h3['thal'] = df_h3['thal'] * 2
+[?2004l[?2004h> df_h3['oldpeak'] = df_h3['oldpeak'] * 2
+[?2004l[?2004h> df_h3['exang'] = df_h3['exang'] * 2
+[?2004l[?2004h> df_h3['slope'] = df_h3['slope'] * 1.5
+[?2004l[?2004h> df_h3['thalach'] = df_h3['thalach'] * 1.5
+[?2004l[?2004h> df_h3_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h3), columns=df_h3.columns)
+[?2004l[?2004h> km3 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_h['km_weighted'] = km3.fit_predict(df_h3_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 4: Key features only + Agglomerative
+[?2004l[?2004h> key_h = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']
+[?2004l[?2004h> df_h4 = df_heart[key_h].copy().astype(float)
+[?2004l[?2004h> df_h4_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h4), columns=key_h)
+[?2004l[?2004h> agg4 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_key'] = agg4.fit_predict(df_h4_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 5: Key features weighted + Agglomerative
+[?2004l[?2004h> df_h5 = df_heart[key_h].copy().astype(float)
+[?2004l[?2004h> df_h5['cp'] = df_h5['cp'] * 2
+[?2004l[?2004h> df_h5['ca'] = df_h5['ca'] * 2
+[?2004l[?2004h> df_h5['thal'] = df_h5['thal'] * 2
+[?2004l[?2004h> df_h5_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h5), columns=key_h)
+[?2004l[?2004h> agg5 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_key_w'] = agg5.fit_predict(df_h5_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 6: PCA + KMeans
+[?2004l[?2004h> pca = PCA(n_components=5)
+[?2004l[?2004h> df_h6_pca = pca.fit_transform(df_h_all_scaled)
+[?2004l[?2004h> km6 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_h['km_pca'] = km6.fit_predict(df_h6_pca)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 7: PCA on one-hot
+[?2004l[?2004h> pca2 = PCA(n_components=10)
+[?2004l[?2004h> df_h7_pca = pca2.fit_transform(df_h_onehot)
+[?2004l[?2004h> km7 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_h['km_pca_onehot'] = km7.fit_predict(df_h7_pca)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 8: All weighted + Agglomerative
+[?2004l[?2004h> agg8 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004l[?2004h> results_h['agg_weighted'] = agg8.fit_predict(df_h3_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 9: GMM on key features weighted
+[?2004l[?2004h> gmm9 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> results_h['gmm_key_w'] = gmm9.fit_predict(df_h5_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 10: KMeans on key features
+[?2004l[?2004h> km10 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_h['km_key'] = km10.fit_predict(df_h4_scaled)
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Heart methods:")
+[?2004l[?2004h> for k, v in results_h.items():
+[?2004l[?2004h>     print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Find consensus
+[?2004l[?2004h> print("\nConsensus analysis:")
+[?2004l[?2004h> keys_h = list(results_h.keys())
+[?2004l[?2004h> for i, k1 in enumerate(keys_h):
+[?2004l[?2004h>     total_ari = 0
+[?2004l[?2004h>     count = 0
+[?2004l[?2004h>     for j, k2 in enumerate(keys_h):
+[?2004l[?2004h>         if i != j:
+[?2004l[?2004h>             ari = adjusted_rand_score(results_h[k1], results_h[k2])
+[?2004l[?2004h>             total_ari += ari
+[?2004l[?2004h>             count += 1
+[?2004l[?2004h>     avg_ari = total_ari / count
+[?2004l[?2004h>     print(f"  {k1}: avg ARI = {avg_ari:.4f}, split = {sum(results_h[k1]==0)}/{sum(results_h[k1]==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # For heart, prefer methods with ~50/50 split AND high consensus
+[?2004l[?2004h> # Filter methods with reasonable split (400-600 per cluster)
+[?2004l[?2004h> filtered = {k: v for k, v in results_h.items() 
+[?2004l[?2004h>             if 400 <= sum(v==0) <= 625 and 400 <= sum(v==1) <= 625}
+[?2004l[?2004h> 
+[?2004l[?2004h> print(f"\nFiltered methods (balanced split): {list(filtered.keys())}")
+[?2004l[?2004h> 
+[?2004l[?2004h> if filtered:
+[?2004l[?2004h>     best_avg = -1
+[?2004l[?2004h>     best_k = None
+[?2004l[?2004h>     for k1 in filtered:
+[?2004l[?2004h>         total_ari = 0
+[?2004l[?2004h>         count = 0
+[?2004l[?2004h>         for k2 in filtered:
+[?2004l[?2004h>             if k1 != k2:
+[?2004l[?2004h>                 ari = adjusted_rand_score(filtered[k1], filtered[k2])
+[?2004l[?2004h>                 total_ari += ari
+[?2004l[?2004h>                 count += 1
+[?2004l[?2004h>         avg = total_ari / max(count, 1)
+[?2004l[?2004h>         if avg > best_avg:
+[?2004l[?2004h>             best_avg = avg
+[?2004l[?2004h>             best_k = k1
+[?2004l[?2004h>     best_heart = filtered[best_k]
+[?2004l[?2004h>     print(f"Selected: {best_k} (avg ARI among balanced = {best_avg:.4f})")
+[?2004l[?2004h> else:
+[?2004l[?2004h>     # fallback
+[?2004l[?2004h>     best_heart = results_h['agg_all']
+[?2004l[?2004h>     print("Fallback: agg_all")
+[?2004l[?2004h> 
+[?2004l[?2004h> print(f"Final heart: {sum(best_heart==0)}/{sum(best_heart==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== SAVE =====================
+[?2004l[?2004h> out_diabetes = pd.DataFrame({'pseudo_label': best_diabetes})
+[?2004l[?2004h> out_diabetes.to_csv('/app/output_diabetes_data.csv', index=False)
+[?2004l[?2004h> print(f"\nSaved diabetes: {out_diabetes['pseudo_label'].value_counts().to_dict()}")
+[?2004l[?2004h> 
+[?2004l[?2004h> out_heart = pd.DataFrame({'pseudo_label': best_heart})
+[?2004l[?2004h> out_heart.to_csv('/app/output_heart.csv', index=False)
+[?2004l[?2004h> print(f"Saved heart: {out_heart['pseudo_label'].value_counts().to_dict()}")
+[?2004l[?2004h> print("Done!")
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@5b075df50935:/app# python3 /app/solve3.py
+[?2004l=== Processing Diabetes Dataset ===
+Diabetes GMM weighted: 287/233
+
+=== Processing Heart Dataset ===
+Heart methods:
+  agg_all: 476/549
+  agg_onehot: 481/544
+  km_weighted: 653/372
+  agg_key: 581/444
+  agg_key_w: 581/444
+  km_pca: 372/653
+  km_pca_onehot: 402/623
+  agg_weighted: 476/549
+  gmm_key_w: 345/680
+  km_key: 407/618
+
+Consensus analysis:
+  agg_all: avg ARI = 0.4575, split = 476/549
+  agg_onehot: avg ARI = 0.3949, split = 481/544
+  km_weighted: avg ARI = 0.5874, split = 653/372
+  agg_key: avg ARI = 0.5109, split = 581/444
+  agg_key_w: avg ARI = 0.5109, split = 581/444
+  km_pca: avg ARI = 0.5874, split = 372/653
+  km_pca_onehot: avg ARI = 0.4822, split = 402/623
+  agg_weighted: avg ARI = 0.4575, split = 476/549
+  gmm_key_w: avg ARI = 0.3953, split = 345/680
+  km_key: avg ARI = 0.5832, split = 407/618
+
+Filtered methods (balanced split): ['agg_all', 'agg_onehot', 'agg_key', 'agg_key_w', 'km_pca_onehot', 'agg_weighted', 'km_key']
+Selected: km_key (avg ARI among balanced = 0.5136)
+Final heart: 407/618
+
+Saved diabetes: {0: 287, 1: 233}
+Saved heart: {1: 618, 0: 407}
+Done!
+[?2004hroot@5b075df50935:/app# head -5 /app/output_diabetes_data.csv && wc -l /app/output_diabetes_data.csv
+[?2004lpseudo_label
+1
+0
+0
+0
+521 /app/output_diabetes_data.csv
+[?2004hroot@5b075df50935:/app# head -5 /app/output_heart.csv && wc -l /app/output_heart.csv
+[?2004lpseudo_label
+1
+0
+0
+1
+1026 /app/output_heart.csv
+[?2004hroot@5b075df50935:/app# cat > /app/solve_final.py << 'EOF'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> from sklearn.cluster import KMeans, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004l[?2004h> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+[?2004l[?2004h> from sklearn.metrics import adjusted_rand_score
+[?2004l[?2004h> import warnings
+[?2004l[?2004h> warnings.filterwarnings('ignore')
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== DIABETES DATASET =====================
+[?2004l[?2004h> print("=== Diabetes Dataset ===")
+[?2004l[?2004h> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+[?2004l[?2004h> 
+[?2004l[?2004h> # Try various approaches
+[?2004l[?2004h> results_d = {}
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method A: Simple rule - polyuria OR polydipsia (strongest indicators)
+[?2004l'] * 2
+df_hw['thal'] = df_hw['thal'] * 2
+df_hw['oldpeak'] = df_hw['oldpeak'] * 1.5
+df_hw['exang'] = df_hw['exang'] * 2
+df_hw['slope'] = df_hw['slope'] * 1.5
+df_hw['thalach'] = df_hw['thalach'] * 1.5
+df_hw_s = pd.DataFrame(StandardScaler().fit_transform(df_hw), columns=df_hw.columns)
+
+results_h['km_allw'] = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hw_s)
+results_h['agg_allw'] = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hw_[?2004h> rule_a = ((df_diabetes['polyuria'] == 1) | (df_diabetes['polydipsia'] == 1)).astype(int).values
+[?2004l[?2004h> results_d['rule_polyuria_or_polydipsia'] = rule_a
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method B: Weighted GMM  
+[?2004l[?2004h> df_db = df_diabetes.copy()
+[?2004l[?2004h> df_db['age'] = StandardScaler().fit_transform(df_db[['age']])
+[?2004l[?2004h> df_db['polyuria'] = df_db['polyuria'] * 3
+[?2004l[?2004h> df_db['polydipsia'] = df_db['polydipsia'] * 3
+[?2004l[?2004h> df_db['sudden_weight_loss'] = df_db['sudden_weight_loss'] * 2
+[?2004l[?2004h> df_db['irritability'] = df_db['irritability'] * 2
+[?2004l[?2004h> df_db['partial_paresis'] = df_db['partial_paresis'] * 2
+[?2004l[?2004h> df_db['polyphagia'] = df_db['polyphagia'] * 1.5
+[?2004l[?2004h> df_db['gender'] = df_db['gender'] * 1.5
+[?2004l[?2004h> gmm_b = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+[?2004l[?2004h> results_d['gmm_weighted'] = gmm_b.fit_predict(df_db)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method C: KMeans on weighted
+[?2004l[?2004h> km_c = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+[?2004l[?2004h> results_d['km_weighted'] = km_c.fit_predict(df_db)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method D: Agglomerative on weighted
+[?2004l[?2004h> agg_d = AgglomerativeClustering(n_clusters=2, linkage='ward')
+[?2004lt[?2004h> results_d['agg_weighted'] = agg_d.fit_predict(df_db)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method E: Rule with more features
+[?2004l[?2004h> df_de = df_diabetes.copy()
+[?2004l[?2004h> score_e = (df_de['polyuria'] * 3 + df_de['polydipsia'] * 3 + 
+[?2004l0).astype(int) * 1)
+results_h['score'] = (score_h >= 6).ast[?2004h>            df_de['sudden_weight_loss'] * 2 + df_de['irritability'] * 2 +
+[?2004l[?2004h>            df_de['partial_paresis'] * 2 + df_de['polyphagia'] * 1.5 +
+[?2004l[?2004h>            df_de['gender'] * 1.5 + df_de['genital_thrush'] * 1)
+[?2004l[?2004h> for thresh in [3, 4, 5, 6]:
+[?2004l[?2004h>     results_d[f'score_t{thresh}'] = (score_e >= thresh).astype(int).values
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Methods and splits:")
+[?2004l[?2004h> for k, v in results_d.items():
+[?2004l[?2004h>     print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Calculate consensus
+[?2004l[?2004h> print("\nConsensus:")
+[?2004l[?2004h> keys = list(results_d.keys())
+[?2004l[?2004h> best_score = -1
+[?2004l[?2004h> best_k = None
+[?2004l[?2004h> for k1 in keys:
+[?2004l[?2004h>     total = sum(adjusted_rand_score(results_d[k1], results_d[k2]) for k2 in keys if k2 != k1)
+[?2004l[?2004h>     avg = total / (len(keys) - 1)
+[?2004l[?2004h>     print(f"  {k1}: avg ARI = {avg:.4f}")
+[?2004l[?2004h>     if avg > best_score:
+[?2004l[?2004h>         best_score = avg
+[?2004l[?2004h>         best_k = k1
+[?2004l[?2004h> 
+[?2004l[?2004h> print(f"\nBest diabetes: {best_k}")
+[?2004l[?2004h> best_diabetes = results_d[best_k]
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== HEART DATASET =====================
+[?2004l[?2004h> print("\n=== Heart Dataset ===")
+[?2004l[?2004h> df_heart = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> 
+[?2004l[?2004h> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+[?2004l[?2004h> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+[?2004l[?2004h> key_h = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']
+[?2004l[?2004h> 
+[?2004l[?2004h> results_h = {}
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 1: All features standardized + various algorithms
+[?2004l[?2004h> df_hall = df_heart.copy().astype(float)
+[?2004l[?2004h> df_hall_s = pd.DataFrame(StandardScaler().fit_transform(df_hall), columns=df_hall.columns)
+[?2004l[?2004h> 
+[?2004l[?2004h> results_h['km_all'] = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hall_s)
+[?2004l[?2004h> results_h['agg_all'] = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hall_s)
+[?2004l[?2004h> results_h['gmm_all'] = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20).fit_predict(df_hall_s)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 2: Key features standardized
+[?2004l[?2004h> df_hkey = df_heart[key_h].copy().astype(float)
+[?2004l[?2004h> df_hkey_s = pd.DataFrame(StandardScaler().fit_transform(df_hkey), columns=key_h)
+[?2004l[?2004h> 
+[?2004l[?2004h> results_h['km_key'] = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hkey_s)
+[?2004l[?2004h> results_h['agg_key'] = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hkey_s)
+[?2004l[?2004h> results_h['gmm_key'] = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20).fit_predict(df_hkey_s)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 3: All features with important ones weighted
+[?2004l[?2004h> df_hw = df_heart.copy().astype(float)
+[?2004l[?2004h> df_hw['cp'] = df_hw['cp'] * 2
+[?2004l[?2004h> df_hw['ca'] = df_hw['ca'] * 2
+[?2004l[?2004h> df_hw['thal'] = df_hw['thal'] * 2
+[?2004l[?2004h> df_hw['oldpeak'] = df_hw['oldpeak'] * 1.5
+[?2004l[?2004h> df_hw['exang'] = df_hw['exang'] * 2
+[?2004l[?2004h> df_hw['slope'] = df_hw['slope'] * 1.5
+[?2004l[?2004h> df_hw['thalach'] = df_hw['thalach'] * 1.5
+[?2004l[?2004h> df_hw_s = pd.DataFrame(StandardScaler().fit_transform(df_hw), columns=df_hw.columns)
+[?2004l[?2004h> 
+[?2004l[?2004h> results_h['km_allw'] = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hw_s)
+[?2004l[?2004h> results_h['agg_allw'] = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hw_s)
+[?2004l[?2004h> results_h['gmm_allw'] = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20).fit_predict(df_hw_s)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 4: One-hot encoding
+[?2004l[?2004h> df_h_num = pd.DataFrame(StandardScaler().fit_transform(df_heart[numerical_features]), columns=numerical_features)
+[?2004l[?2004h> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+[?2004l[?2004h> df_h_cat = pd.DataFrame(encoder.fit_transform(df_heart[categorical_features]),
+[?2004l[?2004h>                         columns=encoder.get_feature_names_out(categorical_features))
+[?2004l[?2004h> df_h_oh = pd.concat([df_h_num, df_h_cat], axis=1)
+[?2004l[?2004h> 
+[?2004l[?2004h> results_h['km_oh'] = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_h_oh)
+[?2004l[?2004h> results_h['agg_oh'] = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_h_oh)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Method 5: Score-based
+[?2004l[?2004h> df_hs = df_heart.copy()
+[?2004l[?2004h> score_h = ((df_hs['cp'] > 0).astype(int) * 2 +
+[?2004l[?2004h>            (df_hs['thalach'] < 140).astype(int) * 2 +
+[?2004l[?2004h>            (df_hs['oldpeak'] > 1.0).astype(int) * 2 +
+[?2004l[?2004h>            (df_hs['ca'] > 0).astype(int) * 3 +
+[?2004l[?2004h>            (df_hs['thal'] == 3).astype(int) * 2 +
+[?2004l[?2004h>            df_hs['exang'] * 2 +
+[?2004l[?2004h>            (df_hs['slope'] == 0).astype(int) * 1)
+[?2004l[?2004h> results_h['score'] = (score_h >= 6).astype(int).values
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Methods and splits:")
+[?2004l[?2004h> for k, v in results_h.items():
+[?2004l[?2004h>     print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Find best consensus among balanced methods
+[?2004l[?2004h> print("\nConsensus (all methods):")
+[?2004l[?2004h> keys_h = list(results_h.keys())
+[?2004l[?2004h> for k1 in keys_h:
+[?2004l[?2004h>     total = sum(adjusted_rand_score(results_h[k1], results_h[k2]) for k2 in keys_h if k2 != k1)
+[?2004l[?2004h>     avg = total / (len(keys_h) - 1)
+[?2004l[?2004h>     print(f"  {k1}: avg ARI = {avg:.4f}, split={sum(results_h[k1]==0)}/{sum(results_h[k1]==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Select the method with highest consensus
+[?2004l[?2004h> best_score_h = -1
+[?2004l[?2004h> best_kh = None
+[?2004l[?2004h> for k1 in keys_h:
+[?2004l[?2004h>     total = sum(adjusted_rand_score(results_h[k1], results_h[k2]) for k2 in keys_h if k2 != k1)
+[?2004l[?2004h>     avg = total / (len(keys_h) - 1)
+[?2004l[?2004h>     if avg > best_score_h:
+[?2004l[?2004h>         best_score_h = avg
+[?2004l[?2004h>         best_kh = k1
+[?2004l[?2004h> 
+[?2004l[?2004h> print(f"\nBest heart: {best_kh} (consensus={best_score_h:.4f})")
+[?2004l[?2004h> best_heart = results_h[best_kh]
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== SAVE =====================
+[?2004l[?2004h> out_d = pd.DataFrame({'pseudo_label': best_diabetes})
+[?2004l[?2004h> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+[?2004l[?2004h> print(f"\nFinal diabetes: {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> out_h = pd.DataFrame({'pseudo_label': best_heart})
+[?2004l[?2004h> out_h.to_csv('/app/output_heart.csv', index=False)
+[?2004l[?2004h> print(f"Final heart: {sum(best_heart==0)}/{sum(best_heart==1)}")
+[?2004l[?2004h> print("\nDone!")
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@5b075df50935:/app# python3 /app/solve_final.py
+[?2004l=== Diabetes Dataset ===
+Methods and splits:
+  rule_polyuria_or_polydipsia: 222/298
+  gmm_weighted: 287/233
+  km_weighted: 276/244
+  agg_weighted: 298/222
+  score_t3: 130/390
+  score_t4: 178/342
+  score_t5: 203/317
+  score_t6: 234/286
+
+Consensus:
+  rule_polyuria_or_polydipsia: avg ARI = 0.7328
+  gmm_weighted: avg ARI = 0.4315
+  km_weighted: avg ARI = 0.6685
+  agg_weighted: avg ARI = 0.7328
+  score_t3: avg ARI = 0.4026
+  score_t4: avg ARI = 0.6222
+  score_t5: avg ARI = 0.6744
+  score_t6: avg ARI = 0.6992
+
+Best diabetes: rule_polyuria_or_polydipsia
+
+=== Heart Dataset ===
+Methods and splits:
+  km_all: 653/372
+  agg_all: 476/549
+  gmm_all: 423/602
+  km_key: 407/618
+  agg_key: 581/444
+  gmm_key: 345/680
+  km_allw: 653/372
+  agg_allw: 476/549
+  gmm_allw: 423/602
+  km_oh: 623/402
+  agg_oh: 481/544
+  score: 563/462
+
+Consensus (all methods):
+  km_all: avg ARI = 0.4768, split=653/372
+  agg_all: avg ARI = 0.3718, split=476/549
+  gmm_all: avg ARI = 0.0971, split=423/602
+  km_key: avg ARI = 0.4712, split=407/618
+  agg_key: avg ARI = 0.3553, split=581/444
+  gmm_key: avg ARI = 0.2936, split=345/680
+  km_allw: avg ARI = 0.4768, split=653/372
+  agg_allw: avg ARI = 0.3718, split=476/549
+  gmm_allw: avg ARI = 0.0971, split=423/602
+  km_oh: avg ARI = 0.4036, split=623/402
+  agg_oh: avg ARI = 0.3391, split=481/544
+  score: avg ARI = 0.3228, split=563/462
+
+Best heart: km_all (consensus=0.4768)
+
+Final diabetes: 222/298
+Final heart: 653/372
+
+Done!
+[?2004hroot@5b075df50935:/app# cat > /app/solve_v4.py << 'EOF'
+[?2004lnd(('km_all', c4))
+
+# KMeans - weighted
+c5 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hw_s)
+clusterings.append(('km_allw', c5))
+
+# KMeans - one-hot
+c6 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_h_oh)
+clusterings.append(('km_oh', c6))
+
+# Key features
+df_hkey_s = pd.DataFrame(StandardScaler().fit_transform(df_heart[key_h].astype(float)), columns=key_h)
+c7 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hkey_s)
+clusterings.append(('km_key', c7))
+
+c8 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hkey_s)
+clusterings.append(('agg_key', c8))
+
+# Agglomerative with different linkages
+c9 = AgglomerativeClustering(n_clusters=2, linkage='complete').fit_predict(df_hall_s)
+clusterings.append(('agg_complete', c9))
+
+c10 = AgglomerativeClustering(n_clusters=2, linkage='average').fit_predict(df_hall_s)
+clusterings.append(('agg_average', c10))
+
+print("Individual methods:")
+for name, c[?2004h> import pandas as pd
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> from sklearn.cluster import KMeans, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004l[?2004h> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+[?2004l[?2004h> from sklearn.metrics import adjusted_rand_score
+[?2004lerings[1:]:
+    # Check if we need to flip labels
+    ari_same = adjust[?2004h> import warnings
+[?2004l[?2004h> warnings.filterwarnings('ignore')
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== DIABETES DATASET =====================
+[?2004l[?2004h> print("=== Diabetes Dataset ===")
+[?2004l[?2004h> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+[?2004l[?2004h> 
+[?2004l
+[?2004h> # Rule-based: polyuria OR polydipsia - strongest diabetes indicators
+[?2004l[?2004h> best_diabetes = ((df_diabetes['polyuria'] == 1) | (df_diabetes['polydipsia'] == 1)).astype(int).values
+[?2004l[?2004h> print(f"Diabetes (rule polyuria|polydipsia): {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== HEART DATASET =====================
+[?2004lagreement with majority
+[?2004h> print("\n=== Heart Dataset ===")
+[?2004l[?2004h> df_heart = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> 
+[?2004l[?2004h> # The heart disease dataset expected: ~50/50
+[?2004l[?2004h> # Key features for heart disease: cp, thalach, oldpeak, ca, thal, exang, slope
+[?2004l c)
+    agree_flip = np.sum(majori[?2004h> # Strategy: Use all features with important ones weighted, then agglomerative
+[?2004l[?2004h> # Also try majority vote ensemble for robustness
+[?2004l[?2004h> 
+[?2004l[?2004h> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+[?2004l[?2004h> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+[?2004l[?2004h> key_h = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']
+[?2004l_[?2004h> 
+[?2004l[?2004h> # Prepare different feature representations
+[?2004l[?2004h> # 1. All scaled
+[?2004l[?2004h> df_hall = df_heart.copy().astype(float)
+[?2004lta.csv', index[?2004h> df_hall_s = pd.DataFrame(StandardScaler().fit_transform(df_hall), columns=df_hall.columns)
+[?2004l[?2004h> 
+[?2004l[?2004h> # 2. Weighted all
+[?2004l[?2004h> df_hw = df_heart.copy().astype(float)
+[?2004l[?2004h> df_hw['cp'] = df_hw['cp'] * 2
+[?2004l[?2004h> df_hw['ca'] = df_hw['ca'] * 2
+[?2004l[?2004h> df_hw['thal'] = df_hw['thal'] * 2
+[?2004l[?2004h> df_hw['oldpeak'] = df_hw['oldpeak'] * 1.5
+[?2004l[?2004h> df_hw['exang'] = df_hw['exang'] * 2
+[?2004l[?2004h> df_hw['slope'] = df_hw['slope'] * 1.5
+[?2004l[?2004h> df_hw['thalach'] = df_hw['thalach'] * 1.5
+[?2004l[?2004h> df_hw_s = pd.DataFrame(StandardScaler().fit_transform(df_hw), columns=df_hw.columns)
+[?2004l[?2004h> 
+[?2004l[?2004h> # 3. One-hot
+[?2004l[?2004h> df_h_num = pd.DataFrame(StandardScaler().fit_transform(df_heart[numerical_features]), columns=numerical_features)
+[?2004l[?2004h> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+[?2004l[?2004h> df_h_cat = pd.DataFrame(encoder.fit_transform(df_heart[categorical_features]),
+[?2004l[?2004h>                         columns=encoder.get_feature_names_out(categorical_features))
+[?2004l[?2004h> df_h_oh = pd.concat([df_h_num, df_h_cat], axis=1)
+[?2004l[?2004h> 
+[?2004l[?2004h> # Generate multiple clusterings
+[?2004l[?2004h> clusterings = []
+[?2004l[?2004h> 
+[?2004l[?2004h> # Agglomerative ward - all scaled
+[?2004l[?2004h> c1 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hall_s)
+[?2004l[?2004h> clusterings.append(('agg_all', c1))
+[?2004l[?2004h> 
+[?2004l[?2004h> # Agglomerative ward - weighted
+[?2004l[?2004h> c2 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hw_s)
+[?2004l[?2004h> clusterings.append(('agg_allw', c2))
+[?2004l[?2004h> 
+[?2004l[?2004h> # Agglomerative ward - one-hot
+[?2004l[?2004h> c3 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_h_oh)
+[?2004l[?2004h> clusterings.append(('agg_oh', c3))
+[?2004l[?2004h> 
+[?2004l[?2004h> # KMeans - all scaled
+[?2004l[?2004h> c4 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hall_s)
+[?2004l[?2004h> clusterings.append(('km_all', c4))
+[?2004l[?2004h> 
+[?2004l[?2004h> # KMeans - weighted
+[?2004l[?2004h> c5 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hw_s)
+[?2004l[?2004h> clusterings.append(('km_allw', c5))
+[?2004l[?2004h> 
+[?2004l[?2004h> # KMeans - one-hot
+[?2004l[?2004h> c6 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_h_oh)
+[?2004l[?2004h> clusterings.append(('km_oh', c6))
+[?2004l[?2004h> 
+[?2004l[?2004h> # Key features
+[?2004l[?2004h> df_hkey_s = pd.DataFrame(StandardScaler().fit_transform(df_heart[key_h].astype(float)), columns=key_h)
+[?2004l[?2004h> c7 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hkey_s)
+[?2004l[?2004h> clusterings.append(('km_key', c7))
+[?2004l[?2004h> 
+[?2004l[?2004h> c8 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hkey_s)
+[?2004l[?2004h> clusterings.append(('agg_key', c8))
+[?2004l[?2004h> 
+[?2004l[?2004h> # Agglomerative with different linkages
+[?2004l[?2004h> c9 = AgglomerativeClustering(n_clusters=2, linkage='complete').fit_predict(df_hall_s)
+[?2004l[?2004h> clusterings.append(('agg_complete', c9))
+[?2004l[?2004h> 
+[?2004l[?2004h> c10 = AgglomerativeClustering(n_clusters=2, linkage='average').fit_predict(df_hall_s)
+[?2004l[?2004h> clusterings.append(('agg_average', c10))
+[?2004l[?2004h> 
+[?2004l[?2004h> print("Individual methods:")
+[?2004l[?2004h> for name, c in clusterings:
+[?2004l[?2004h>     print(f"  {name}: {sum(c==0)}/{sum(c==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Majority vote ensemble
+[?2004l[?2004h> # First align labels - use the first method as reference
+[?2004l[?2004h> ref = clusterings[0][1]
+[?2004l[?2004h> aligned = [ref.copy()]
+[?2004l[?2004h> for name, c in clusterings[1:]:
+[?2004l[?2004h>     # Check if we need to flip labels
+[?2004l[?2004h>     ari_same = adjusted_rand_score(ref, c)
+[?2004l[?2004h>     # ARI is symmetric, no need to flip - but for voting we need consistent labels
+[?2004l[?2004h>     # Check which alignment gives better agreement with reference
+[?2004l[?2004h>     agree_same = np.sum(ref == c)
+[?2004l[?2004h>     agree_flip = np.sum(ref == (1 - c))
+[?2004l[?2004h>     if agree_flip > agree_same:
+[?2004l[?2004h>         aligned.append(1 - c)
+[?2004l[?2004h>     else:
+[?2004l[?2004h>         aligned.append(c.copy())
+[?2004l[?2004h> 
+[?2004l[?2004h> # Majority vote
+[?2004l[?2004h> votes = np.array(aligned)
+[?2004l[?2004h> majority = (votes.sum(axis=0) > len(aligned) / 2).astype(int)
+[?2004l[?2004h> 
+[?2004l[?2004h> print(f"\nMajority vote ensemble: {sum(majority==0)}/{sum(majority==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Also try: pick the balanced method with highest agreement with majority
+[?2004l[?2004h> print("\nAgreement with majority vote:")
+[?2004l[?2004h> best_agree = -1
+[?2004l[?2004h> best_method = None
+[?2004l[?2004h> for name, c in clusterings:
+[?2004l[?2004h>     # Align with majority
+[?2004l[?2004h>     agree_same = np.sum(majority == c)
+[?2004l[?2004h>     agree_flip = np.sum(majority == (1 - c))
+[?2004l[?2004h>     agree = max(agree_same, agree_flip)
+[?2004l[?2004h>     split = f"{sum(c==0)}/{sum(c==1)}"
+[?2004l[?2004h>     print(f"  {name}: agreement={agree/len(c):.4f}, split={split}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # Use majority vote as final
+[?2004l[?2004h> best_heart = majority
+[?2004l[?2004h> print(f"\nFinal heart (majority): {sum(best_heart==0)}/{sum(best_heart==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== SAVE =====================
+[?2004l[?2004h> out_d = pd.DataFrame({'pseudo_label': best_diabetes})
+[?2004l[?2004h> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+[?2004l[?2004h> print(f"\nSaved diabetes: {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> out_h = pd.DataFrame({'pseudo_label': best_heart})
+[?2004l[?2004h> out_h.to_csv('/app/output_heart.csv', index=False)
+[?2004l[?2004h> print(f"Saved heart: {sum(best_heart==0)}/{sum(best_heart==1)}")
+[?2004l[?2004h> print("Done!")
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@5b075df50935:/app# python3 /app/solve_v4.py
+[?2004l=== Diabetes Dataset ===
+Diabetes (rule polyuria|polydipsia): 222/298
+
+=== Heart Dataset ===
+Individual methods:
+  agg_all: 476/549
+  agg_allw: 476/549
+  agg_oh: 481/544
+  km_all: 653/372
+  km_allw: 653/372
+  km_oh: 623/402
+  km_key: 407/618
+  agg_key: 581/444
+  agg_complete: 1022/3
+  agg_average: 1022/3
+
+Majority vote ensemble: 384/641
+
+Agreement with majority vote:
+  agg_all: agreement=0.8693, split=476/549
+  agg_allw: agreement=0.8693, split=476/549
+  agg_oh: agreement=0.8585, split=481/544
+  km_all: agreement=0.9688, split=653/372
+  km_allw: agreement=0.9688, split=653/372
+  km_oh: agreement=0.9220, split=623/402
+  km_key: agreement=0.9541, split=407/618
+  agg_key: agreement=0.8712, split=581/444
+  agg_complete: agreement=0.6224, split=1022/3
+  agg_average: agreement=0.6224, split=1022/3
+
+Final heart (majority): 384/641
+
+Saved diabetes: 222/298
+Saved heart: 384/641
+Done!
+[?2004hroot@5b075df50935:/app# cat > /app/solve_final2.py << 'EOF'
+[?2004lws")
+print(f"Heart output: {len(out_h)} rows")
+EOF
+[?2004h> import pandas as pd
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> from sklearn.cluster import KMeans, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004l[?2004h> from sklearn.preprocessing import StandardScaler
+[?2004l[?2004h> import warnings
+[?2004l[?2004h> warnings.filterwarnings('ignore')
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== DIABETES =====================
+[?2004l[?2004h> print("=== Diabetes ===")
+[?2004l[?2004h> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+[?2004l[?2004h> 
+[?2004l[?2004h> # polyuria OR polydipsia - the two strongest diabetes indicators
+[?2004l[?2004h> # This had highest consensus with other methods (avg ARI=0.73)
+[?2004l[?2004h> best_diabetes = ((df_diabetes['polyuria'] == 1) | (df_diabetes['polydipsia'] == 1)).astype(int).values
+[?2004l[?2004h> print(f"Split: {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== HEART =====================
+[?2004l[?2004h> print("\n=== Heart ===")
+[?2004l[?2004h> df_heart = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> 
+[?2004l[?2004h> # Weight important clinical features for heart disease
+[?2004l[?2004h> df_hw = df_heart.copy().astype(float)
+[?2004l[?2004h> df_hw['cp'] = df_hw['cp'] * 2       # chest pain type
+[?2004l[?2004h> df_hw['ca'] = df_hw['ca'] * 2       # number of major vessels
+[?2004l[?2004h> df_hw['thal'] = df_hw['thal'] * 2   # thalassemia
+[?2004l[?2004h> df_hw['oldpeak'] = df_hw['oldpeak'] * 1.5  # ST depression
+[?2004l[?2004h> df_hw['exang'] = df_hw['exang'] * 2  # exercise induced angina
+[?2004l[?2004h> df_hw['slope'] = df_hw['slope'] * 1.5  # slope of peak exercise ST
+[?2004l[?2004h> df_hw['thalach'] = df_hw['thalach'] * 1.5  # max heart rate
+[?2004l[?2004h> 
+[?2004l[?2004h> # Scale and cluster with Agglomerative Ward (gives realistic ~50/50 split)
+[?2004l[?2004h> df_hw_s = pd.DataFrame(StandardScaler().fit_transform(df_hw), columns=df_hw.columns)
+[?2004l[?2004h> best_heart = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hw_s)
+[?2004l[?2004h> print(f"Split: {sum(best_heart==0)}/{sum(best_heart==1)}")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ===================== SAVE =====================
+[?2004l[?2004h> out_d = pd.DataFrame({'pseudo_label': best_diabetes})
+[?2004l[?2004h> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> out_h = pd.DataFrame({'pseudo_label': best_heart})
+[?2004l[?2004h> out_h.to_csv('/app/output_heart.csv', index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> print("\nSaved!")
+[?2004l[?2004h> print(f"Diabetes output: {len(out_d)} rows")
+[?2004l[?2004h> print(f"Heart output: {len(out_h)} rows")
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@5b075df50935:/app# python3 /app/solve_final2.py
+[?2004l=== Diabetes ===
+Split: 222/298
+
+=== Heart ===
+Split: 476/549
+
+Saved!
+Diabetes output: 520 rows
+Heart output: 1025 rows
+[?2004hroot@5b075df50935:/app# head -3 /app/output_diabetes_data.csv && echo '---' && tail -3 /app/output_diabetes_data.csv
+[?2004lpseudo_label
+1
+0
+---
+1
+0
+0
+[?2004hroot@5b075df50935:/app# head -3 /app/output_heart.csv && echo '---' && tail -3 /app/output_heart.csv
+[?2004lpseudo_label
+1
+0
+---
+0
+1
+0
+[?2004hroot@5b075df50935:/app# python3 -c "
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> 
+[?2004l[?2004h> # Verify diabetes output
+[?2004l[?2004h> d = pd.read_csv('/app/output_diabetes_data.csv')
+[?2004l[?2004h> print('Diabetes output:')
+[?2004l[?2004h> print(f'  Columns: {list(d.columns)}')
+[?2004l[?2004h> print(f'  Shape: {d.shape}')
+[?2004l[?2004h> print(f'  Values: {sorted(d["pseudo_label"].unique())}')
+[?2004l[?2004h> print(f'  Counts: {d["pseudo_label"].value_counts().to_dict()}')
+[?2004l[?2004h> 
+[?2004l[?2004h> # Verify heart output
+[?2004l[?2004h> h = pd.read_csv('/app/output_heart.csv')
+[?2004l[?2004h> print('\nHeart output:')
+[?2004l[?2004h> print(f'  Columns: {list(h.columns)}')
+[?2004l[?2004h> print(f'  Shape: {h.shape}')
+[?2004l[?2004h> print(f'  Values: {sorted(h["pseudo_label"].unique())}')
+[?2004l[?2004h> print(f'  Counts: {h["pseudo_label"].value_counts().to_dict()}')
+[?2004l[?2004h> 
+[?2004l[?2004h> # Verify expected input sizes
+[?2004l[?2004h> di = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> hi = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> print(f'\nInput diabetes: {len(di)} rows')
+[?2004l[?2004h> print(f'Input heart: {len(hi)} rows')
+[?2004l[?2004h> print(f'Match diabetes: {len(d) == len(di)}')
+[?2004l[?2004h> print(f'Match heart: {len(h) == len(hi)}')
+[?2004l[?2004h> "
+[?2004lDiabetes output:
+  Columns: ['pseudo_label']
+  Shape: (520, 1)
+Traceback (most recent call last):
+  File [35m"<string>"[0m, line [35m9[0m, in [35m<module>[0m
+    print(f'  Values: {sorted(d[[1;31mpseudo_label[0m].unique())}')
+                                [1;31m^^^^^^^^^^^^[0m
+[1;35mNameError[0m: [35mname 'pseudo_label' is not defined[0m
+[?2004hroot@5b075df50935:/app# python3 << 'PYEOF'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> 
+[?2004l[?2004h> d = pd.read_csv('/app/output_diabetes_data.csv')
+[?2004l[?2004h> print('Diabetes output:')
+[?2004l[?2004h> print(f'  Columns: {list(d.columns)}')
+[?2004l[?2004h> print(f'  Shape: {d.shape}')
+[?2004l[?2004h> print(f'  Values: {sorted(d["pseudo_label"].unique())}')
+[?2004l[?2004h> print(f'  Counts: {d["pseudo_label"].value_counts().to_dict()}')
+[?2004l[?2004h> 
+[?2004l[?2004h> h = pd.read_csv('/app/output_heart.csv')
+[?2004l[?2004h> print('\nHeart output:')
+[?2004l[?2004h> print(f'  Columns: {list(h.columns)}')
+[?2004l[?2004h> print(f'  Shape: {h.shape}')
+[?2004l[?2004h> print(f'  Values: {sorted(h["pseudo_label"].unique())}')
+[?2004l[?2004h> print(f'  Counts: {h["pseudo_label"].value_counts().to_dict()}')
+[?2004l[?2004h> 
+[?2004l[?2004h> di = pd.read_csv('/app/diabetes_data.csv')
+[?2004l[?2004h> hi = pd.read_csv('/app/heart.csv')
+[?2004l[?2004h> print(f'\nInput diabetes: {len(di)} rows')
+[?2004l[?2004h> print(f'Input heart: {len(hi)} rows')
+[?2004l[?2004h> print(f'Match diabetes: {len(d) == len(di)}')
+[?2004l[?2004h> print(f'Match heart: {len(h) == len(hi)}')
+[?2004l[?2004h> PYEOF
+[?2004lDiabetes output:
+  Columns: ['pseudo_label']
+  Shape: (520, 1)
+  Values: [np.int64(0), np.int64(1)]
+  Counts: {1: 298, 0: 222}
+
+Heart output:
+  Columns: ['pseudo_label']
+  Shape: (1025, 1)
+  Values: [np.int64(0), np.int64(1)]
+  Counts: {1: 549, 0: 476}
+
+Input diabetes: 520 rows
+Input heart: 1025 rows
+Match diabetes: True
+Match heart: True
+[?2004hroot@5b075df50935:/app# 

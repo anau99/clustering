@@ -1,0 +1,14 @@
+New Terminal Output:
+
+    return model.fit_predict(X)root@6156096e0877:/app# cat /app/requirements.txt
+scikit-learn==1.6.1
+torch==2.9.1
+pandas==3.0.3
+pytest==9.1.1
+pytest-json-ctrf==0.5.2
+numpy==2.2.6
+pyyaml==6.0.2root@6156096e0877:/app# wc -l /app/diabetes_data.csv /app/heart.csv
+  521 /app/diabetes_data.csv
+ 1026 /app/heart.csv
+ 1547 total
+root@6156096e0877:/app#

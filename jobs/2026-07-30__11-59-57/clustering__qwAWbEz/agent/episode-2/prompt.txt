@@ -1,0 +1,171 @@
+Current terminal state:
+New Terminal Output:
+
+root@613d962e1432:/app# cat > /app/run_cluster.py <<'PY'
+> import pandas as pd
+> import numpy as np
+>
+> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+> from sklearn.compose import ColumnTransformer
+> from sklearn.pipeline import Pipeline
+> from sklearn.metrics import silhouette_score, calinski_harabasz_score
+>
+> from src.cluster.kmean import kmeans
+> from src.cluster.gaussian_mixture import gaussian_mixture
+> from src.cluster.spectral import spectral
+> from src.cluster.agglomerative import agglomerative
+> from src.cluster.birch import birch
+> from src.cluster.minibatch_kmeans import minibatch_kmeans
+> from src.cluster.bisecting_kmeans import bisecting_kmeans
+>
+> CLUSTERERS = {
+>     "kmeans": kmeans,
+>     "gmm": gaussian_mixture,
+>     "spectral": spectral,
+>     "agglomerative": agglomerative,
+>     "birch": birch,
+>     "minibatch": minibatch_kmeans,
+>     "bisect": bisecting_kmeans,
+> }
+>
+>
+> def eval_clustering(X, y):
+>     # Some clusterers can return a single cluster in edge cases; guard.
+>     if len(np.unique(y)) < 2:
+>         return {"sil": -1.0, "ch": -1.0}
+>     out = {}
+>     try:
+>         out["sil"] = float(silhouette_score(X, y, metric="euclidean"))
+>     except Exception:
+>         out["sil"] = -1.0
+>     try:
+>         out["ch"] = float(calinski_harabasz_score(X, y))
+>     except Exception:
+>         out["ch"] = -1.0
+>     return out
+>
+>
+> def choose_best(df, preprocessors, k=2, random_tries=1):
+>     best = None
+>     for pname, pre in preprocessors.items():
+>         X = pre.fit_transform(df)
+>         # Ensure dense float
+>         if hasattr(X, "toarray"):
+>             X = X.toarray()
+>         X = np.asarray(X, dtype=float)
+>
+>         for cname, clusterer in CLUSTERERS.items():
+>             # spectral can be slow; still ok for these sizes
+>             try:
+>                 y = clusterer(X, k)
+>             except Exception as e:
+>                 continue
+>
+>             scores = eval_clustering(X, y)
+>             # Combine metrics: prioritize silhouette, then CH (scaled)
+>             combo = scores["sil"] + 1e-4 * scores["ch"]
+>             cand = (combo, scores, pname, cname, y)
+>             if best is None or cand[0] > best[0]:
+>                 best = cand
+>
+>     if best is None:
+>         raise RuntimeError("No clustering succeeded")
+>     return best
+>
+>
+> def main():
+>     # Diabetes
+>     d = pd.read_csv("/app/diabetes_data.csv")
+>     d_cat = ["gender"]
+>     d_num = [c for c in d.columns if c not in d_cat]
+>
+>     diabetes_pre = {
+>         "onehot_gender_std": ColumnTransformer(
+>             [
+>                 ("cat", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), d_cat),
+>                 ("num", Pipeline([("sc", StandardScaler())]), d_num),
+>             ],
+>             remainder="drop",
+>         ),
+>         "std_all_numeric_after_binary_gender": ColumnTransformer(
+>             [
+>                 ("cat", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), d_cat),
+>                 ("num", "passthrough", d_num),
+>             ],
+>             remainder="drop",
+>         ),
+>     }
+>
+>     best_d = choose_best(d, diabetes_pre, k=2)
+>     _, scores_d, pname_d, cname_d, y_d = best_d
+>     print("BEST diabetes:", pname_d, cname_d, scores_d)
+>
+>     out_d = pd.DataFrame({"pseudo_label": pd.Series(y_d).astype(int)})
+>     out_d.to_csv("/app/output_diabetes_data.csv", index=False)
+>
+>     # Heart
+>     h = pd.read_csv("/app/heart.csv")
+>     # As per prompt: numeric: trestbps, chol, thalach, oldpeak. others (except age) are categorical.
+>     h_num = ["trestbps", "chol", "thalach", "oldpeak", "age"]
+>     h_cat = [c for c in h.columns if c not in h_num]
+>
+>     heart_pre = {
+>         "onehot_cat_std_num": ColumnTransformer(
+>             [
+>                 ("cat", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), h_cat),
+>                 ("num", StandardScaler(), h_num),
+>             ],
+>             remainder="drop",
+>         ),
+>         "std_all_as_numeric": ColumnTransformer(
+>             [("all", StandardScaler(), h.columns.tolist())],
+>             remainder="drop",
+>         ),
+>     }
+>
+>     best_h = choose_best(h, heart_pre, k=2)
+>     _, scores_h, pname_h, cname_h, y_h = best_h
+>     print("BEST heart:", pname_h, cname_h, scores_h)
+>
+>     out_h = pd.DataFrame({"pseudo_label": pd.Series(y_h).astype(int)})
+>     out_h.to_csv("/app/output_heart.csv", index=False)
+>
+>
+> if __name__ == "__main__":
+>     main()
+> PY
+root@613d962e1432:/app# python3 /app/run_cluster.py
+BEST diabetes: std_all_numeric_after_binary_gender kmeans {'sil': 0.5566359722336852, 'ch': 1009.4605239653336}
+python3 -c "import pandas as pd; print(pd.read_csv('/app/output_diabetes_data.csv').head()); print(pd.read_csv('/app/output_diabetes_data.csv').shape); print(pd
+.read_csv('/app/output_heart.csv').head()); print(pd.read_csv('/app/output_heart.csv').shape)"
+/usr/local/lib/python3.13/site-packages/sklearn/manifold/_spectral_embedding.py:329: UserWarning: Graph is not fully connected, spectral embedding may not work
+as expected.
+  warnings.warn(
+BEST heart: onehot_cat_std_num minibatch {'sil': 0.17300958949509768, 'ch': 213.27284036200507}
+root@613d962e1432:/app# python3 -c "import pandas as pd; print(pd.read_csv('/app/output_diabetes_data.csv').head()); print(pd.read_csv('/app/output_diabetes_dat
+a.csv').shape); print(pd.read_csv('/app/output_heart.csv').head()); print(pd.read_csv('/app/output_heart.csv').shape)"
+python3 -c "import pandas as pd; import numpy as np; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); assert list(d.colum
+ns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).
+issubset({0,1}); print('ok unique counts diabetes', np.bincount(d['pseudo_label'])); print('ok unique counts heart', np.bincount(h['pseudo_label']))"
+   pseudo_label
+0             0
+1             1
+2             0
+3             0
+4             1
+(520, 1)
+   pseudo_label
+0             1
+1             0
+2             0
+3             1
+4             0
+(1025, 1)
+root@613d962e1432:/app# python3 -c "import pandas as pd; import numpy as np; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.cs
+v'); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['p
+seudo_label'].unique()).issubset({0,1}); print('ok unique counts diabetes', np.bincount(d['pseudo_label'])); print('ok unique counts heart', np.bincount(h['pseu
+do_label']))"
+
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

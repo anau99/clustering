@@ -1,0 +1,125 @@
+Current terminal state:
+New Terminal Output:
+
+dtype: object
+root@4aa2ab795f3c:/app# cat > /app/run_cluster.py <<'PY'
+> import numpy as np
+> import pandas as pd
+> from sklearn.compose import ColumnTransformer
+> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+> from sklearn.pipeline import Pipeline
+> from sklearn.cluster import KMeans, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+> from sklearn.metrics import silhouette_score
+>
+>
+> def _best_by_silhouette(X, candidates):
+>     best = None
+>     best_score = -1e9
+>     for name, model in candidates:
+>         if name == 'gmm':
+>             labels = model.fit_predict(X)
+>         else:
+>             labels = model.fit_predict(X)
+>         # silhouette requires >1 label
+>         if len(np.unique(labels)) < 2:
+>             score = -1e9
+>         else:
+>             score = silhouette_score(X, labels, metric='euclidean')
+>         if score > best_score:
+>             best_score = score
+>             best = (name, model, labels, score)
+>     return best
+>
+>
+> def cluster_diabetes(in_path, out_path):
+>     df = pd.read_csv(in_path)
+>     # features
+>     num_cols = ['age']
+>     cat_cols = ['gender']
+>     other_cols = [c for c in df.columns if c not in num_cols + cat_cols]
+>
+>     pre = ColumnTransformer(
+>         transformers=[
+>             ('num', StandardScaler(), num_cols),
+>             ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_cols),
+>             ('bin', 'passthrough', other_cols),
+>         ],
+>         remainder='drop'
+>     )
+>
+>     X = pre.fit_transform(df)
+>
+>     candidates = [
+>         ('kmeans', KMeans(n_clusters=2, n_init='auto', random_state=42)),
+>         ('gmm', GaussianMixture(n_components=2, covariance_type='full', random_state=42)),
+>         ('agg', AgglomerativeClustering(n_clusters=2, linkage='ward')),
+>     ]
+>
+>     name, model, labels, score = _best_by_silhouette(X, candidates)
+>     labels = labels.astype(int)
+>     # ensure 0/1
+>     labels = (labels == np.min(labels)).astype(int) if set(np.unique(labels))=={0,1} else (labels % 2)
+>
+>     out = pd.DataFrame({'pseudo_label': labels.astype(int)})
+>     out.to_csv(out_path, index=False)
+>     return name, score
+>
+>
+> def cluster_heart(in_path, out_path):
+>     df = pd.read_csv(in_path)
+>
+>     cat_cols = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+>     num_cols = [c for c in df.columns if c not in cat_cols]
+>
+>     pre = ColumnTransformer(
+>         transformers=[
+>             ('num', StandardScaler(), num_cols),
+>             ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_cols),
+>         ],
+>         remainder='drop'
+>     )
+>
+>     X = pre.fit_transform(df)
+>
+>     candidates = [
+>         ('kmeans', KMeans(n_clusters=2, n_init='auto', random_state=42)),
+>         ('gmm', GaussianMixture(n_components=2, covariance_type='full', random_state=42)),
+>         ('agg', AgglomerativeClustering(n_clusters=2, linkage='ward')),
+>     ]
+>
+>     name, model, labels, score = _best_by_silhouette(X, candidates)
+>     labels = labels.astype(int)
+>     labels = (labels == np.min(labels)).astype(int) if set(np.unique(labels))=={0,1} else (labels % 2)
+>
+>     out = pd.DataFrame({'pseudo_label': labels.astype(int)})
+>     out.to_csv(out_path, index=False)
+>     return name, score
+>
+>
+> if __name__ == '__main__':
+>     d_name, d_score = cluster_diabetes('/app/diabetes_data.csv', '/app/output_diabetes_data.csv')
+>     h_name, h_score = cluster_heart('/app/heart.csv', '/app/output_heart.csv')
+>     print('diabetes best:', d_name, 'silhouette:', d_score)
+>     print('heart best:', h_name, 'silhouette:', h_score)
+> PY
+root@4aa2ab795f3c:/app# python3 /app/run_cluster.py
+python3 - <<'PY'
+import pandas as pd
+for path, n in [('/app/output_diabetes_data.csv',520),('/app/output_heart.csv',1025)]:
+    df=pd.read_csv(path)
+    print(path, df.shape)
+    print(df.columns)
+    vals=set(df['pseudo_label'].unique())
+    print('unique', vals, 'counts', df['pseudo_label'].value_counts().to_dict())
+    assert df.shape[0]==n
+    assert list(df.columns)==['pseudo_label']
+    assert vals.issubset({0,1})
+print('ok')
+PY
+head -n 5 /app/output_diabetes_data.csv
+head -n 5 /app/output_heart.csv
+
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

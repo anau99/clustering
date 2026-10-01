@@ -1,0 +1,45 @@
+New Terminal Output:
+root@25a96eac46b4:/app# find /app -type f | head -50
+/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+/app/.dockerignore
+/app/heart.csv
+/app/diabetes_data.csv
+/app/Dockerfile
+/app/requirements.txt
+root@25a96eac46b4:/app# head -5 /app/diabetes_data.csv
+age,gender,polyuria,polydipsia,sudden_weight_loss,weakness,polyphagia,genital_thrush,visual_blurring,itching,irritability,delayed_healing,partial_paresis,muscle
+_stiffness,alopecia,obesity
+40,Male,0,1,0,1,0,0,0,1,0,1,0,1,1,1
+58,Male,0,0,0,1,0,0,1,0,0,0,1,0,1,0
+41,Male,1,0,0,1,1,0,0,1,0,1,0,1,1,0
+45,Male,0,0,1,1,1,1,0,1,0,1,0,0,0,0
+root@25a96eac46b4:/app# head -5 /app/heart.csv
+age,sex,cp,trestbps,chol,fbs,restecg,thalach,exang,oldpeak,slope,ca,thal
+52,1,0,125,212,0,1,168,0,1,2,2,3
+53,1,0,140,203,1,0,155,1,3.1,0,0,3
+70,1,0,145,174,0,1,125,1,2.6,0,0,3
+61,1,0,148,203,0,1,161,0,0,2,1,3
+root@25a96eac46b4:/app# ls /app/src/transform/
+BinaryEncoder.py  FrequencyEncoder.py  KBinsDiscretizer.py  Normalizer.py     OrdinalEncoder.py      RobustScaler.py
+CountEncoder.py   HashEncoder.py       MaxAbsScaler.py      OnehotEncoder.py  PolynomialFeatures.py  StandardScaler.py
+root@25a96eac46b4:/app# ls /app/src/cluster/
+agglomerative.py  birch.py  bisecting_kmeans.py  gaussian_mixture.py  kmean.py  minibatch_kmeans.py  spectral.py
+root@25a96eac46b4:/app#

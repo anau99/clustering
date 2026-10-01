@@ -1,0 +1,230 @@
+New Terminal Output:
+
+root@e8904edca287:/app# cat > /app/solve2.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> from sklearn.preprocessing import StandardScaler
+> from sklearn.cluster import KMeans, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+> from sklearn.metrics import silhouette_score
+>
+> # ===== DIABETES DATASET =====
+ 'fbs',> print("Processing diabetes dataset...")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+>
+d> # Encode gender
+> df_diabetes['gender_num'] = (df_diabetes['gender'] == 'Male').astype(int)
+> df_features = df_diabetes.drop(columns=['gender'])
+>
+s=df_heart.columns)
+
+# Weig> # Scale age
+> scaler = StandardScaler()
+> df_features['age'] = scaler.fit_transform(df_features[['age']])
+>
+> # Approach: Heavily weight polyuria and polydipsia (most diagnostic for diabetes)
+> # These two symptoms alone have very high predictive power for diabetes
+> weights_d = {
+>     'polyuria': 3.0,
+>     'polydipsia': 3.0,
+>     'sudden_weight_loss': 2.0,
+>     'polyphagia': 1.5,
+>     'irritability': 1.5,
+>     'partial_paresis': 1.5,
+k-means+>     'gender_num': 1.5,
+>     'age': 1.0,
+>     'weakness': 1.0,
+>     'genital_thrush': 1.0,
+>     'visual_blurring': 1.0,
+>     'itching': 1.0,
+>     'delayed_healing': 1.0,
+>     'muscle_stiffness': 1.0,
+>     'alopecia': 1.0,
+>     'obesity': 1.0,
+> }
+>
+> X_d = df_features.copy()
+> for col in X_d.columns:
+>     if col in weights_d:
+>         X_d[col] = X_d[col] * weights_d[col]
+> X_d_vals = X_d.values
+>
+> # Try multiple approaches with weighted features
+> results_d = {}
+>
+d> for n_init_val in [50, 100]:
+ns=categorical_>     km = KMeans(n_clusters=2, init='k-means++', n_init=n_init_val, random_state=42)
+>     labels = km.fit_predict(X_d_vals)
+>     name = f'kmeans_w_ninit{n_init_val}'
+>     results_d[name] = labels
+>
+> gmm = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_d['gmm_w'] = gmm.fit_predict(X_d_vals)
+>
+> agg = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_d['agg_w'] = agg.fit_predict(X_d_vals)
+>
+> # Even more aggressive: just use polyuria + polydipsia + a few others
+> key_features = ['polyuria', 'polydipsia', 'sudden_weight_loss', 'polyphagia', 'irritability', 'partial_paresis', 'gender_num']
+> X_d_key = df_features[key_features].values * 1.0
+> km_key = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_d['kmeans_key'] = km_key.fit_predict(X_d_key)
+>
+> gmm_key = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_d['gmm_key'] = gmm_key.fit_predict(X_d_key)
+>
+> # Simple rule-based: polyuria OR polydipsia -> cluster 1
+> rule_based = ((df_diabetes['polyuria'] == 1) | (df_diabetes['polydipsia'] == 1)).astype(int).values
+> results_d['rule_polyuria_polydipsia'] = rule_based
+>
+d> # polyuria AND polydipsia
+> rule_based2 = ((df_diabetes['polyuria'] == 1) & (df_diabetes['polydipsia'] == 1)).astype(int).values
+> results_d['rule_both'] = rule_based2
+>
+> # Composite score approach
+> df_score = df_diabetes.copy()
+> df_score['score'] = (df_score['polyuria'] * 3 + df_score['polydipsia'] * 3 +
+>                      df_score['sudden_weight_loss'] * 2 + df_score['polyphagia'] * 1.5 +
+>                      df_score['irritability'] * 1.5 + df_score['partial_paresis'] * 1.5 +
+>                      df_score['gender_num'] * 0.5)
+> threshold = df_score['score'].median()
+> results_d['score_median'] = (df_score['score'] > threshold).astype(int).values
+>
+> # Use GMM on the score
+> from sklearn.mixture import GaussianMixture as GM
+> score_vals = df_score['score'].values.reshape(-1, 1)
+> gmm_score = GM(n_components=2, random_state=42)
+> results_d['gmm_score'] = gmm_score.fit_predict(score_vals)
+>
+> print("\nDiabetes results:")
+> for name, labels in results_d.items():
+>     unique, counts = np.unique(labels, return_counts=True)
+>     sil = silhouette_score(X_d_vals, labels) if len(unique) > 1 else -1
+ sil = s>     print(f"  {name}: sizes={dict(zip(unique, counts))}, silhouette={sil:.4f}")
+>
+m> # The diabetes dataset ground truth is likely positive/negative.
+> # Known: ~320 positive, ~200 negative in Pima dataset, or it could be early-stage diabetes dataset
+> # Let's use the GMM on weighted features
+> best_d = results_d['gmm_w']
+> print(f"\nChosen diabetes: gmm_w, distribution: {np.bincount(best_d)}")
+>
+> # Save
+> out_d = pd.DataFrame({'pseudo_label': best_d})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+>
+> # ===== HEART DATASET =====
+> print("\n\nProcessing heart dataset...")
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> numerical_cols = ['trestbps', 'chol', 'thalach', 'oldpeak']
+> categorical_cols = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+>
+> results_h = {}
+>
+> # Approach 1: All features standardized with weights
+> scaler_h = StandardScaler()
+> X_h = pd.DataFrame(scaler_h.fit_transform(df_heart.values), columns=df_heart.columns)
+>
+> # Weight important features
+> weights_h 
+[... output limited to 10000 bytes; 69 interior bytes omitted ...]
+e + weight
+> df_h_oh = pd.get_dummies(df_heart, columns=categorical_cols)
+> scaler_oh = StandardScaler()
+> X_h_oh = scaler_oh.fit_transform(df_h_oh.values)
+>
+> km_oh = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['kmeans_onehot'] = km_oh.fit_predict(X_h_oh)
+>
+> gmm_oh = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_h['gmm_onehot'] = gmm_oh.fit_predict(X_h_oh)
+>
+> # Approach 3: Score-based
+> df_h_score = df_heart.copy()
+> # Compute a heart disease risk score based on medical knowledge
+> # cp: 0=typical angina (less risk), 1,2,3 = atypical/non-anginal/asymptomatic (higher risk for 0)
+> # Actually in the UCI heart dataset, higher cp value = less typical = more likely disease
+> # thalach: lower = more risk; exang: 1 = more risk; oldpeak: higher = more risk
+> # ca: more vessels colored = more risk; thal: 3 = fixed defect = more risk
+>
+> # Standardize numerical features for scoring
+> df_h_std = df_heart.copy()
+> for col in numerical_cols:
+>     df_h_std[col] = (df_h_std[col] - df_h_std[col].mean()) / df_h_std[col].std()
+>
+> score_h = (df_h_std['cp'] * 2.0 - df_h_std['thalach'] * 1.5 +
+>            df_h_std['oldpeak'] * 2.0 + df_heart['exang'] * 2.0 +
+>            df_heart['ca'] * 2.5 + (df_heart['thal'] == 3).astype(float) * 2.0 +
+>            df_heart['slope'].map({0: 1, 1: 0, 2: -0.5}) * 1.5 +
+>            df_heart['sex'] * 0.5)
+>
+> threshold_h = score_h.median()
+> results_h['score_median'] = (score_h > threshold_h).astype(int).values
+>
+> # GMM on score
+> score_h_vals = score_h.values.reshape(-1, 1)
+> gmm_score_h = GaussianMixture(n_components=2, random_state=42)
+> results_h['gmm_score'] = gmm_score_h.fit_predict(score_h_vals)
+>
+> # KMeans on key features only
+> key_h = ['cp', 'thalach', 'oldpeak', 'exang', 'ca', 'thal', 'slope']
+> X_h_key = df_heart[key_h].copy()
+> scaler_key = StandardScaler()
+> X_h_key_scaled = scaler_key.fit_transform(X_h_key)
+> km_key_h = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['kmeans_key'] = km_key_h.fit_predict(X_h_key_scaled)
+>
+> gmm_key_h = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_h['gmm_key'] = gmm_key_h.fit_predict(X_h_key_scaled)
+>
+> print("\nHeart results:")
+> for name, labels in results_h.items():
+>     unique, counts = np.unique(labels, return_counts=True)
+>     sil = silhouette_score(X_h_w_vals, labels) if len(unique) > 1 else -1
+>     print(f"  {name}: sizes={dict(zip(unique, counts))}, silhouette={sil:.4f}")
+>
+> # Use the score-based approach for heart (medical knowledge-driven)
+> best_h = results_h['gmm_score']
+> print(f"\nChosen heart: gmm_score, distribution: {np.bincount(best_h)}")
+>
+> # Save
+> out_h = pd.DataFrame({'pseudo_label': best_h})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+>
+> print("\nDone!")
+> EOF
+root@e8904edca287:/app# python3 /app/solve2.py
+Processing diabetes dataset...
+
+Diabetes results:
+  kmeans_w_ninit50: sizes={np.int32(0): np.int64(279), np.int32(1): np.int64(241)}, silhouette=0.3306
+  kmeans_w_ninit100: sizes={np.int32(0): np.int64(279), np.int32(1): np.int64(241)}, silhouette=0.3306
+  gmm_w: sizes={np.int64(0): np.int64(287), np.int64(1): np.int64(233)}, silhouette=0.3230
+  agg_w: sizes={np.int64(0): np.int64(298), np.int64(1): np.int64(222)}, silhouette=0.3228
+  kmeans_key: sizes={np.int32(0): np.int64(283), np.int32(1): np.int64(237)}, silhouette=0.3075
+  gmm_key: sizes={np.int64(0): np.int64(258), np.int64(1): np.int64(262)}, silhouette=0.3253
+  rule_polyuria_polydipsia: sizes={np.int64(0): np.int64(222), np.int64(1): np.int64(298)}, silhouette=0.3228
+  rule_both: sizes={np.int64(0): np.int64(327), np.int64(1): np.int64(193)}, silhouette=0.3178
+  score_median: sizes={np.int64(0): np.int64(264), np.int64(1): np.int64(256)}, silhouette=0.3144
+  gmm_score: sizes={np.int64(0): np.int64(235), np.int64(1): np.int64(285)}, silhouette=0.3276
+
+Chosen diabetes: gmm_w, distribution: [287 233]
+
+
+Processing heart dataset...
+
+Heart results:
+  kmeans_weighted: sizes={np.int32(0): np.int64(642), np.int32(1): np.int64(383)}, silhouette=0.2426
+  gmm_weighted: sizes={np.int64(0): np.int64(345), np.int64(1): np.int64(680)}, silhouette=0.1894
+  agg_weighted: sizes={np.int64(0): np.int64(477), np.int64(1): np.int64(548)}, silhouette=0.1956
+  kmeans_onehot: sizes={np.int32(0): np.int64(510), np.int32(1): np.int64(515)}, silhouette=0.1855
+  gmm_onehot: sizes={np.int64(0): np.int64(144), np.int64(1): np.int64(881)}, silhouette=0.1827
+  score_median: sizes={np.int64(0): np.int64(515), np.int64(1): np.int64(510)}, silhouette=0.1775
+  gmm_score: sizes={np.int64(0): np.int64(501), np.int64(1): np.int64(524)}, silhouette=0.1832
+  kmeans_key: sizes={np.int32(0): np.int64(407), np.int32(1): np.int64(618)}, silhouette=0.2344
+  gmm_key: sizes={np.int64(0): np.int64(345), np.int64(1): np.int64(680)}, silhouette=0.1894
+
+Chosen heart: gmm_score, distribution: [501 524]
+
+Done!
+root@e8904edca287:/app#

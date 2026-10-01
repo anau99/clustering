@@ -1,0 +1,83 @@
+{
+    "reportFormat": "CTRF",
+    "specVersion": "0.0.0",
+    "timestamp": "2026-07-30T04:38:40.104678+00:00",
+    "generatedBy": "pytest",
+    "results": {
+        "tool": {
+            "name": "pytest",
+            "version": "9.1.1"
+        },
+        "summary": {
+            "tests": 6,
+            "passed": 6,
+            "failed": 0,
+            "skipped": 0,
+            "pending": 0,
+            "other": 0,
+            "start": 1785386314384,
+            "stop": 1785386320104
+        },
+        "environment": {
+            "buildName": "Pytest JSON CTRF Report",
+            "buildNumber": "000",
+            "buildUrl": "https://ctrf.io"
+        },
+        "tests": [
+            {
+                "name": "test_outputs.py::test_clustering_metrics",
+                "status": "passed",
+                "duration": 16,
+                "start": 1785386320076,
+                "stop": 1785386320092,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_row_count_matches_input",
+                "status": "passed",
+                "duration": 2,
+                "start": 1785386320092,
+                "stop": 1785386320094,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_both_clusters_present",
+                "status": "passed",
+                "duration": 3,
+                "start": 1785386320095,
+                "stop": 1785386320098,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_single_column",
+                "status": "passed",
+                "duration": 2,
+                "start": 1785386320098,
+                "stop": 1785386320100,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_file_name",
+                "status": "passed",
+                "duration": 1,
+                "start": 1785386320100,
+                "stop": 1785386320101,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_column_name",
+                "status": "passed",
+                "duration": 3,
+                "start": 1785386320101,
+                "stop": 1785386320104,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            }
+        ]
+    }
+}

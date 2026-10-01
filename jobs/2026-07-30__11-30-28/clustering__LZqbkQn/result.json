@@ -1,0 +1,127 @@
+{
+    "id": "af03cae6-d8ab-444c-9ec9-286e60861539",
+    "task_name": "clustering",
+    "trial_name": "clustering__LZqbkQn",
+    "trial_uri": "file:///home/an/Documents/assemple/cluster/jobs/2026-07-30__11-30-28/clustering__LZqbkQn",
+    "task_id": {
+        "path": "clustering"
+    },
+    "source": null,
+    "task_checksum": "9df5efd5d12362d0d167e4615636876cce7d7ef621c3a79029e85ecceb114cc2",
+    "config": {
+        "task": {
+            "path": "clustering",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "clustering__LZqbkQn",
+        "trials_dir": "jobs/2026-07-30__11-30-28",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "terminus-2",
+            "import_path": null,
+            "model_name": "anthropic/@anthropic/claude-opus-4-6",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {},
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {},
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "c253659a-a208-4c37-90e9-3394f95beef5"
+    },
+    "agent_info": {
+        "name": "terminus-2",
+        "version": "2.0.0",
+        "model_info": {
+            "name": "@anthropic/claude-opus-4-6",
+            "provider": "anthropic"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 639126,
+        "n_cache_tokens": 565743,
+        "n_output_tokens": 40110,
+        "cost_usd": 1.7308314999999999,
+        "rollout_details": [],
+        "metadata": {
+            "n_episodes": 19,
+            "api_request_times_msec": [
+                5684.117317199707,
+                7056.849241256714,
+                7872.158050537109,
+                33321.34127616882,
+                52107.29908943176,
+                57305.134534835815,
+                5087.91446685791,
+                58746.31452560425,
+                6231.703042984009,
+                4929.7614097595215,
+                28972.371816635132,
+                88608.59036445618,
+                62061.837911605835,
+                8086.281061172485,
+                51250.7061958313,
+                25175.174474716187,
+                18979.854822158813,
+                26104.7945022583,
+                27836.749792099
+            ],
+            "summarization_count": 0
+        }
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.0
+        }
+    },
+    "exception_info": null,
+    "started_at": "2026-07-30T04:38:06.049049Z",
+    "finished_at": "2026-07-30T04:51:59.033673Z",
+    "environment_setup": {
+        "started_at": "2026-07-30T04:38:06.101854Z",
+        "finished_at": "2026-07-30T04:38:09.142992Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-07-30T04:38:09.143005Z",
+        "finished_at": "2026-07-30T04:38:11.377231Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-07-30T04:38:11.377326Z",
+        "finished_at": "2026-07-30T04:51:38.922362Z"
+    },
+    "verifier": {
+        "started_at": "2026-07-30T04:51:39.327212Z",
+        "finished_at": "2026-07-30T04:51:47.219479Z"
+    },
+    "step_results": null
+}

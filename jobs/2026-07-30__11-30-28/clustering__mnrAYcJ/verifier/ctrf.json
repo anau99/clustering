@@ -1,0 +1,86 @@
+{
+    "reportFormat": "CTRF",
+    "specVersion": "0.0.0",
+    "timestamp": "2026-07-30T04:37:54.754681+00:00",
+    "generatedBy": "pytest",
+    "results": {
+        "tool": {
+            "name": "pytest",
+            "version": "9.1.1"
+        },
+        "summary": {
+            "tests": 6,
+            "passed": 5,
+            "failed": 1,
+            "skipped": 0,
+            "pending": 0,
+            "other": 0,
+            "start": 1785386268957,
+            "stop": 1785386274754
+        },
+        "environment": {
+            "buildName": "Pytest JSON CTRF Report",
+            "buildNumber": "000",
+            "buildUrl": "https://ctrf.io"
+        },
+        "tests": [
+            {
+                "name": "test_outputs.py::test_clustering_metrics",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 84,
+                "start": 1785386274658,
+                "stop": 1785386274742,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "def test_clustering_metrics():\n        \"\"\"\n        Compare predicted cluster labels against true labels using\n        ARI and NMI for both datasets.\n        \"\"\"\n    \n        for cfg in DATASETS:\n    \n            y_true = cfg[\"true_labels\"]\n            pred_df = pd.read_csv(cfg[\"pred_file\"])\n            y_pred = pred_df[cfg[\"pred_label_col\"]].values\n    \n            assert len(y_true) == len(y_pred), (\n                f\"{cfg['name']}: row count mismatch \"\n                f\"(true={len(y_true)}, pred={len(y_pred)})\"\n            )\n    \n            ari = adjusted_rand_score(y_true, y_pred)\n            nmi = normalized_mutual_info_score(y_true, y_pred)\n    \n            print(\n                f\"{cfg['name']} -> \"\n                f\"ARI={ari:.4f} | \"\n                f\"NMI={nmi:.4f}\"\n            )\n    \n>           assert ari >= cfg[\"ari_threshold\"], (\n                f\"{cfg['name']}: \"\n                f\"ARI={ari:.4f} < {cfg['ari_threshold']}\"\n            )\nE           AssertionError: diabetes_data: ARI=0.1723 < 0.34\nE           assert 0.1723398424129162 >= 0.34\n\n/tests/test_outputs.py:79: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_row_count_matches_input",
+                "status": "passed",
+                "duration": 3,
+                "start": 1785386274742,
+                "stop": 1785386274745,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_both_clusters_present",
+                "status": "passed",
+                "duration": 3,
+                "start": 1785386274745,
+                "stop": 1785386274748,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_single_column",
+                "status": "passed",
+                "duration": 2,
+                "start": 1785386274748,
+                "stop": 1785386274750,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_file_name",
+                "status": "passed",
+                "duration": 1,
+                "start": 1785386274750,
+                "stop": 1785386274751,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_column_name",
+                "status": "passed",
+                "duration": 2,
+                "start": 1785386274752,
+                "stop": 1785386274754,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            }
+        ]
+    }
+}

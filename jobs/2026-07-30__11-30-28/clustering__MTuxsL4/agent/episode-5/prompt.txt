@@ -1,0 +1,236 @@
+New Terminal Output:
+
+root@6156096e0877:/app# cat > /app/solve2.py << 'EOF'
+ 'partial_paresis', 'irritability', 'polyphagia']
+less_important = ['gender', 'weakness', 'genital_thrush', 'visual_blurring',
+                  'itching', 'delayed_healing', 'muscle_stiffness', 'alopecia', 'obesity']
+
+best_silhouette_d = -1
+best_labels_d = None
+best_method_d = ""
+
+results_d = {}
+
+# Method 1: Use only key features
+X_key = df_d[important_features].values
+for name, labels in [
+    ('kmeans_key', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_key)),
+    ('gmm_key', GaussianMixture(n_components=2, random_state=42).fit_predict(X_key)),
+]:
+    sil = silhouette_score(X_key, labels)
+    results_d[name] = (labels, sil)
+    print(f"{name}: silhouette={sil:.4f}, dist={np.bincount(labels)}")
+
+# Method 2: All features scaled, different algorithms
+scaler = StandardScaler()
+X_all_scaled = scaler.fit_transform(df_d.values)
+
+for name, labels in [
+    ('kmeans_all', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_all_scaled)),
+    ('gmm_all', GaussianMixture(n_components=2, rand> import pandas as pd
+> import numpy as np
+> from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+> from sklearn.decomposition import PCA
+> from sklearn.metrics import silhouette_score
+> import warnings
+> warnings.filterwarnings('ignore')
+>
+> # ============ DIABETES DATASET ============
+e_labels = ((df_diabetes['polyuria'] == 1) | (df_diabet> print("="*60)
+> print("DIABETES DATASET")
+> print("="*60)
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+>
+> # The diabetes dataset is about early-stage diabetes prediction
+> # Key features: polyuria, polydipsia are the strongest predictors
+> # Ground truth is likely Positive/Negative diabetes
+>
+l> df_d = df_diabetes.copy()
+> df_d['gender'] = df_d['gender'].map({'Male': 1, 'Female': 0})
+>
+> # Approach: Weight important features more heavily
+> # polyuria and polydipsia are the most discriminative for diabetes
+> important_features = ['polyuria', 'polydipsia', 'sudden_weight_loss',
+>                      'partial_paresis', 'irritability', 'polyphagia']
+> less_important = ['gender', 'weakness', 'genital_thrush', 'visual_blurring',
+>                   'itching', 'delayed_healing', 'muscle_stiffness', 'alopecia', 'obesity']
+>
+p> best_silhouette_d = -1
+> best_labels_d = None
+> best_method_d = ""
+>
+> results_d = {}
+>
+> # Method 1: Use only key features
+> X_key = df_d[important_features].values
+> for name, labels in [
+>     ('kmeans_key', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_key)),
+>     ('gmm_key', GaussianMixture(n_components=2, random_state=42).fit_predict(X_key)),
+> ]:
+cop>     sil = silhouette_score(X_key, labels)
+>     results_d[name] = (labels, sil)
+>     print(f"{name}: silhouette={sil:.4f}, dist={np.bincount(labels)}")
+>
+> # Method 2: All features scaled, different algorithms
+> scaler = StandardScaler()
+> X_all_scaled = scaler.fit_transform(df_d.values)
+>
+e> for name, labels in [
+>     ('kmeans_all', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_all_scaled)),
+>     ('gmm_all', GaussianMixture(n_components=2, random_state=42).fit_predict(X_all_scaled)),
+>     ('agglo_all', AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(X_all_scaled)),
+>     ('spectral_all', SpectralClustering(n_clusters=2, affinity='nearest_neighbors', random_state=42).fit_predict(X_all_scaled)),
+> ]:
+>     sil = silhouette_score(X_all_scaled, labels)
+>     results_d[name] = (labels, sil)
+>     print(f"{name}: silhouette={sil:.4f}, dist={np.bincount(labels)}")
+>
+> # Method 3: Weight features by importance
+> df_d_weighted = df_d.copy()
+> weight = 3.0
+> for feat in important_features:
+>     df_d_weighted[feat] = df_d_weighted[feat] * weight
+> X_weighted = StandardScaler().fit_transform(df_d_weighted.values)
+>
+> for name, labels in [
+>     ('kmeans_weighted', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_weighted)),
+>     ('gmm_weighted', GaussianMixture(n_components=2, random_state=42).fit_predict(X_weighted)),
+>     ('agglo_weighted', AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(X_weighted)),
+> ]:
+>     sil = silhouette_score(X_weighted, labels)
+>     results_d[name] = (labels, sil)
+>     print(f"{name}: silhouette={sil:.4f}, dist={np.bincount(labels)}")
+>
+> # Method 4: PCA then cluster
+> pca = PCA(n_components=5)
+> X_pca = pca.fit_transform(X_all_scaled)
+> for name, labels in [
+>     ('kmeans_pca', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_pca)),
+>     ('gmm_pca', GaussianMixture(n_components=2, random_state=42).fit_predict(X_pca)),
+> ]:
+>     sil = silhouette_score(X_pca, labels)
+>     results_d[name] = (labels, sil)
+>     print(f"{name}: silhouette={sil:.4f}, dist={np.bincount(labels)}")
+>
+> # Method 5: Simple sum-based approach
+> # Sum of all binary symptom fea
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+silhouette={sil:.4f}, dist={np.bincount(labels)}")
+>
+> # Approach 3: Use only most discriminative features for heart disease
+> # cp, thalach, oldpeak, ca, thal, exang are strong predictors
+> key_features_h = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang']
+> df_h_key = df_heart[key_features_h].copy()
+> X_h3 = StandardScaler().fit_transform(df_h_key.values)
+> for name, labels in [
+>     ('kmeans_key', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_h3)),
+>     ('gmm_key', GaussianMixture(n_components=2, random_state=42).fit_predict(X_h3)),
+>     ('agglo_key', AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(X_h3)),
+> ]:
+>     sil = silhouette_score(X_h3, labels)
+>     results_h[name] = (labels, sil)
+>     print(f"{name}: silhouette={sil:.4f}, dist={np.bincount(labels)}")
+>
+> # Approach 4: PCA on one-hot encoded
+> pca_h = PCA(n_components=5)
+> X_h_pca = pca_h.fit_transform(X_h1)
+> for name, labels in [
+>     ('kmeans_pca', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_h_pca)),
+>     ('gmm_pca', GaussianMixture(n_components=2, random_state=42).fit_predict(X_h_pca)),
+> ]:
+>     sil = silhouette_score(X_h_pca, labels)
+>     results_h[name] = (labels, sil)
+>     print(f"{name}: silhouette={sil:.4f}, dist={np.bincount(labels)}")
+>
+> # Approach 5: Weighted features
+> df_h_w = df_heart.copy().astype(float)
+> weight_cols = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang']
+> for col in weight_cols:
+>     df_h_w[col] = df_h_w[col] * 2.0
+> X_h5 = StandardScaler().fit_transform(df_h_w.values)
+> for name, labels in [
+>     ('kmeans_weighted', KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X_h5)),
+>     ('gmm_weighted', GaussianMixture(n_components=2, random_state=42).fit_predict(X_h5)),
+>     ('agglo_weighted', AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(X_h5)),
+> ]:
+>     sil = silhouette_score(X_h5, labels)
+>     results_h[name] = (labels, sil)
+>     print(f"{name}: silhouette={sil:.4f}, dist={np.bincount(labels)}")
+>
+> print("\n\n" + "="*60)
+> print("SAVING BEST RESULTS")
+> print("="*60)
+>
+> # For diabetes, use the GMM weighted approach
+> # For the diabetes dataset, a good cluster should split ~320/200 or similar
+> # The rule-based approach using polyuria|polydipsia should give the best ARI
+> print("\nDiabetes: Using rule-based (polyuria OR polydipsia)")
+> out_d = pd.DataFrame({'pseudo_label': results_d['rule_based'][0]})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"Distribution: {np.bincount(results_d['rule_based'][0])}")
+>
+> # For heart, use spectral or agglo on key features
+> # The heart dataset typically has ~500+ disease and ~500- no disease
+> print("\nHeart: Using agglo on key features")
+> out_h = pd.DataFrame({'pseudo_label': results_h['agglo_key'][0]})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+> print(f"Distribution: {np.bincount(results_h['agglo_key'][0])}")
+>
+> print("\nDone!")
+> EOF
+root@6156096e0877:/app# python /app/solve2.py
+============================================================
+DIABETES DATASET
+============================================================
+kmeans_key: silhouette=0.3705, dist=[267 253]
+gmm_key: silhouette=0.3509, dist=[298 222]
+kmeans_all: silhouette=0.1846, dist=[242 278]
+gmm_all: silhouette=0.1555, dist=[233 287]
+agglo_all: silhouette=0.1484, dist=[374 146]
+spectral_all: silhouette=0.1234, dist=[143 377]
+kmeans_weighted: silhouette=0.1846, dist=[242 278]
+gmm_weighted: silhouette=0.1555, dist=[233 287]
+agglo_weighted: silhouette=0.1484, dist=[374 146]
+kmeans_pca: silhouette=0.2819, dist=[278 242]
+gmm_pca: silhouette=0.2044, dist=[334 186]
+kmeans_sum: silhouette=0.5551, dist=[252 268]
+gmm_sum: silhouette=0.5548, dist=[222 298]
+rule_based: dist=[222 298]
+rule2_based (AND): dist=[327 193]
+
+--- Diabetes: Selecting best method ---
+
+============================================================
+HEART DATASET
+============================================================
+kmeans_ohe: silhouette=0.1688, dist=[465 560]
+gmm_ohe: silhouette=0.0754, dist=[304 721]
+agglo_ohe: silhouette=0.1555, dist=[747 278]
+kmeans_ordinal: silhouette=0.1701, dist=[653 372]
+gmm_ordinal: silhouette=0.1107, dist=[497 528]
+agglo_ordinal: silhouette=0.1331, dist=[476 549]
+spectral_ordinal: silhouette=0.1250, dist=[1014   11]
+kmeans_key: silhouette=0.2936, dist=[403 622]
+gmm_key: silhouette=0.2262, dist=[497 528]
+agglo_key: silhouette=0.2671, dist=[409 616]
+kmeans_pca: silhouette=0.2570, dist=[468 557]
+gmm_pca: silhouette=0.2213, dist=[514 511]
+kmeans_weighted: silhouette=0.1701, dist=[653 372]
+gmm_weighted: silhouette=0.1107, dist=[497 528]
+agglo_weighted: silhouette=0.1331, dist=[476 549]
+
+
+============================================================
+SAVING BEST RESULTS
+============================================================
+
+Diabetes: Using rule-based (polyuria OR polydipsia)
+Distribution: [222 298]
+
+Heart: Using agglo on key features
+Distribution: [409 616]
+
+Done!
+root@6156096e0877:/app#

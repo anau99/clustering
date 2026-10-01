@@ -1,0 +1,88 @@
+New Terminal Output:
+
+root@e123fae6e01b:/app# cat /app/src/cluster/kmean.py
+from sklearn.cluster import KMeans
+
+
+def kmeans(X, k):
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init="auto",
+        random_state=42
+    )
+    return model.fit_predict(X)root@e123fae6e01b:/app# cat /app/src/cluster/gaussian_mixture.py
+from sklearn.mixture import GaussianMixture
+
+
+def gaussian_mixture(X, k):
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="full",
+        random_state=42
+    )
+    return model.fit_predict(X)root@e123fae6e01b:/app# cat /app/src/transform/OnehotEncoder.py
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+
+
+def one_hot_encoder(df: pd.DataFrame,columns=None,encode_all=False) -> pd.DataFrame:
+
+    result = df.copy()
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OneHotEncoder(
+        sparse_output=False,
+        handle_unknown="ignore"
+    )
+
+    encoded = encoder.fit_transform(result[columns])
+
+    encoded_df = pd.DataFrame(
+        encoded,
+        columns=encoder.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, encoded_df], axis=1)
+
+    return resultroot@e123fae6e01b:/app# cat /app/src/transform/StandardScaler.py
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+
+def standard_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Standardize selected columns.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = StandardScaler()
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return resultroot@e123fae6e01b:/app# cat /app/requirements.txt
+scikit-learn==1.6.1
+torch==2.9.1
+pandas==3.0.3
+pytest==9.1.1
+pytest-json-ctrf==0.5.2
+numpy==2.2.6
+pyyaml==6.0.2root@e123fae6e01b:/app#

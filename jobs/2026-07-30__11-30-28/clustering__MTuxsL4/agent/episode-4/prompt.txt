@@ -1,0 +1,255 @@
+New Terminal Output:
+
+root@6156096e0877:/app# cat > /app/solve.py << 'EOF'
+o)}")
+
+# Try approach 3: No scaling, just binary encode gender
+df_d3 = df_diabetes.copy()
+df_d3['gender'] = df_d3['gender'].map({'Male': 1, 'Female': 0})
+X_d3 = df_d3.values
+
+labels_d3_kmeans = kmeans(X_d3, 2)
+labels_d3_gmm = gaussian_mixture(X_d3, 2)
+
+print(f"\nApproach 3 (no scaling):")
+print(f"KMeans cluster distribution: {np.bincount(labels_d3_kmeans)}")
+print(f"GMM cluster distribution: {np.bincount(labels_d3_gmm)}")
+
+# ============ HEART DATASET ============
+print("\n\nProcessing heart.csv...")
+df_heart = pd.read_csv('/app/heart.csv')
+print(f"Shape: {df_heart.shape}")
+print(f"Columns: {df_heart.columns.tolist()}")
+print(f"Dtypes:\n{df_heart.dtypes}")
+print(f"Head:\n{df_heart.head()}")
+
+# Heart dataset: numerical features (trestbps, chol, thalach, oldpeak)
+# categorical features: sex, cp, fbs, restecg, exang, slope, ca, thal
+numerical_cols_h = ['trestbps', 'chol', 'thalach', 'oldpeak']
+categorical_cols_h = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+
+# Note: 'age' is in the dataset but task says it's not numerical feature for clustering
+# Actually the task says: four numerical features (trestbps, chol, thalach, oldpeak)
+# and eight categorical features: sex, cp, fbs, restecg, exang, slope, ca, thal
+# So 'age' is not mentioned - let's check if we should drop it or include it
+
+# Approach 1: One-hot encode categoricals, standard scale numericals, include age as numerical
+df_h = df_heart.copy()
+# Drop age since it's not mentioned in feature lists
+# Actually let me keep it and try both
+df_h1 = df_h.drop(columns=['age'])
+df_h1 = one_hot_encoder(df_h1, columns=categorical_cols_h)
+df_h1 = standard_scaler(df_h1, columns=numerical_cols_h)
+X_h1 = df_h1.values
+
+labels_h1_kmeans = kmeans(X_h1, 2)
+labels_h1_gmm = gaussian_mixture(X_h1, 2)
+labels_h1_agglo = agglomerative(X_h1, 2)
+
+print(f"\nHeart Approach 1 (drop age, onehot cat, scale num):")
+print(f"KMeans cluster distribution: {np.bincount(labels_h1_kmeans)}")
+print(f"GMM cluster distribution: {np.bincount(labels_h1_gmm)}")
+print(f"Agglomerative cluster distribution: {np.bincou> import pandas as pd
+glo)}> import numpy as np
+> import sys
+> sys.path.insert(0, '/app/src')
+>
+> from transform.OnehotEncoder import one_hot_encoder
+> from transform.StandardScaler import standard_scaler
+> from transform.Normalizer import *
+> from cluster.kmean import kmeans
+column> from cluster.gaussian_mixture import gaussian_mixture
+> from cluster.spectral import spectral
+> from cluster.agglomerative import agglomerative
+> from cluster.bisecting_kmeans import *
+> from cluster.birch import *
+>
+c> # ============ DIABETES DATASET ============
+> print("Processing diabetes_data.csv...")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> print(f"Shape: {df_diabetes.shape}")
+> print(f"Columns: {df_diabetes.columns.tolist()}")
+> print(f"Dtypes:\n{df_diabetes.dtypes}")
+> print(f"Head:\n{df_diabetes.head()}")
+>
+> # Preprocess diabetes: encode gender as binary, scale age
+> df_d = df_diabetes.copy()
+> # Gender encoding
+> df_d['gender'] = df_d['gender'].map({'Male': 1, 'Female': 0})
+>
+> # Try approach 1: StandardScaler on all features then GMM
+> df_d_scaled = standard_scaler(df_d)
+> print(f"\nDiabetes scaled shape: {df_d_scaled.shape}")
+>
+> # Try multiple clustering methods
+> X_d = df_d_scaled.values
+>
+> labels_d_kmeans = kmeans(X_d, 2)
+> labels_d_gmm = gaussian_mixture(X_d, 2)
+> labels_d_agglo = agglomerative(X_d, 2)
+>
+> print(f"KMeans cluster distribution: {np.bincount(labels_d_kmeans)}")
+> print(f"GMM cluster distribution: {np.bincount(labels_d_gmm)}")
+> print(f"Agglomerative cluster distribution: {np.bincount(labels_d_agglo)}")
+>
+> # Try approach 2: One-hot encode gender, scale age only
+> df_d2 = df_diabetes.copy()
+)}")
+
+# For now, let's save the GMM results (typically best for mixed data)
+# Diabetes: use approach 1 GMM
+print("\n\nSaving results...")
+
+# Save diabetes output - using GMM on scaled data
+out_d = pd.DataFrame({'pseudo_label': labels_d_gmm})
+out_d.to_csv('/app/output_diabetes_data.csv', index=> df_d2 = one_hot_encoder(df_d2, columns=['gender'])
+> df_d2 = standard_scaler(df_d2, columns=['age'])
+> X_d2 = df_d2.values
+>
+> labels_d2_kmeans = kmeans(X_d2, 2)
+> labels_d2_gmm = gaussian_mixture(X_d2, 2)
+> labels_d2_agglo = agglomerative(X_d2, 2)
+>
+> print(f"\nApproach 2:")
+> print(f"KMeans cluster distribution: {np.bincount(labels_d2_kmeans)}")
+> print(f"GMM cluster distribution: {np.bincount(labels_d2_gmm)}")
+> print(f"Agglomerative cluster distribution: {np.bincount(labels_d2_agglo)}")
+>
+> # Try approach 3: No scaling, just binary encode gender
+> df_d3 = df_diabetes.copy()
+> df_d3['gender'] = df_d3['gender'].map({'Male': 1, 'Female': 0})
+> X_d3 = df_d3.values
+>
+> labels_d3_kmeans = kmeans(X_d3, 2)
+> labels_d3_gmm = gaussian_mixture(X_d3, 2)
+>
+> print(f"\nApproach 3 (no scaling):")
+> print(f"KMeans cluster distribution: {np.bincount(labels_d3_kmeans)}")
+> print(f"GMM cluster distribution: {np.
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+3 = df_h.copy()
+> df_h3 = one_hot_encoder(df_h3, columns=categorical_cols_h)
+> df_h3 = standard_scaler(df_h3)  # scale all
+> X_h3 = df_h3.values
+>
+> labels_h3_kmeans = kmeans(X_h3, 2)
+> labels_h3_gmm = gaussian_mixture(X_h3, 2)
+> labels_h3_agglo = agglomerative(X_h3, 2)
+>
+> print(f"\nHeart Approach 3 (onehot cat, scale all):")
+> print(f"KMeans cluster distribution: {np.bincount(labels_h3_kmeans)}")
+> print(f"GMM cluster distribution: {np.bincount(labels_h3_gmm)}")
+> print(f"Agglomerative cluster distribution: {np.bincount(labels_h3_agglo)}")
+>
+> # For now, let's save the GMM results (typically best for mixed data)
+> # Diabetes: use approach 1 GMM
+> print("\n\nSaving results...")
+>
+> # Save diabetes output - using GMM on scaled data
+> out_d = pd.DataFrame({'pseudo_label': labels_d_gmm})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"Saved diabetes output: {out_d['pseudo_label'].value_counts().to_dict()}")
+>
+> # Save heart output - using GMM approach 2
+> out_h = pd.DataFrame({'pseudo_label': labels_h2_gmm})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+> print(f"Saved heart output: {out_h['pseudo_label'].value_counts().to_dict()}")
+>
+> print("\nDone!")
+> EOF
+root@6156096e0877:/app# cd /app && python solve.py
+Processing diabetes_data.csv...
+Shape: (520, 16)
+Columns: ['age', 'gender', 'polyuria', 'polydipsia', 'sudden_weight_loss', 'weakness', 'polyphagia', 'genital_thrush', 'visual_blurring', 'itching', 'irritabili
+ty', 'delayed_healing', 'partial_paresis', 'muscle_stiffness', 'alopecia', 'obesity']
+Dtypes:
+age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+Head:
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+3   45   Male         0           0                   1         1  ...             0                1                0                 0         0        0
+4   60   Male         1           1                   1         1  ...             1                1                1                 1         1        1
+
+[5 rows x 16 columns]
+
+Diabetes scaled shape: (520, 16)
+KMeans cluster distribution: [255 265]
+GMM cluster distribution: [233 287]
+Agglomerative cluster distribution: [374 146]
+
+Approach 2:
+KMeans cluster distribution: [315 205]
+GMM cluster distribution: [329 191]
+Agglomerative cluster distribution: [268 252]
+
+Approach 3 (no scaling):
+KMeans cluster distribution: [313 207]
+GMM cluster distribution: [365 155]
+
+
+Processing heart.csv...
+Shape: (1025, 13)
+Columns: ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+Dtypes:
+age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+Head:
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+3   61    1   0       148   203    0        1      161      0      0.0      2   1     3
+4   62    0   0       138   294    1        1      106      0      1.9      1   3     2
+
+Heart Approach 1 (drop age, onehot cat, scale num):
+KMeans cluster distribution: [404 621]
+GMM cluster distribution: [144 881]
+Agglomerative cluster distribution: [481 544]
+
+Heart Approach 2 (keep age, onehot cat, scale num):
+KMeans cluster distribution: [462 563]
+GMM cluster distribution: [304 721]
+Agglomerative cluster distribution: [747 278]
+
+Heart Approach 3 (onehot cat, scale all):
+KMeans cluster distribution: [481 544]
+GMM cluster distribution: [144 881]
+Agglomerative cluster distribution: [645 380]
+
+
+Saving results...
+Saved diabetes output: {1: 287, 0: 233}
+Saved heart output: {1: 721, 0: 304}
+
+Done!
+root@6156096e0877:/app#

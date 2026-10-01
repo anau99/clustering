@@ -1,0 +1,218 @@
+New Terminal Output:
+
+root@5b075df50935:/app# cat > /app/solve.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
+> from sklearn.decomposition import PCA
+> import warnings
+> warnings.filterwarnings('ignore')
+>
+> # ===================== DIABETES DATASET =====================
+> print("=== Processing Diabetes Dataset ===")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+>
+> # Encode gender: Male=1, Female=0
+> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+>
+> # The key features for diabetes are polyuria and polydipsia
+hot'] = km_h1.fit_predict(df_h1_combined)
+
+gmm_h1 = GaussianMixture(n_components=2, covariance_type='full', random_state=42,> # Strategy: use all features, scale age, and cluster
+>
+> # Approach 1: StandardScaler on age, keep binary as-is, KMeans
+> df_d = df_diabetes.copy()
+> scaler = StandardScaler()
+> df_d['age'] = scaler.fit_transform(df_d[['age']])
+>
+> # Try multiple methods
+> results_diabetes = {}
+init=10)
+results_heart['gmm_onehot'] = gmm_h1.fit_predict(df_h1_combined)
+
+agg_h1 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+results_heart['agg_onehot'] = agg_h1.fit_predict(df_h1_combined)
+
+# Approach 2: Treat all as numerical, scale everything
+df_>
+> # KMeans
+> km = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_diabetes['kmeans'] = km.fit_predict(df_d)
+>
+> # GMM
+> gmm = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_diabetes['gmm'] = gmm.fit_predict(df_d)
+>
+> # Agglomerative
+> agg = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_diabetes['agg'] = agg.fit_predict(df_d)
+>
+> # Approach 2: Weight important features more heavily
+> df_d2 = df_diabetes.copy()
+> scaler2 = StandardScaler()
+> df_d2['age'] = scaler2.fit_transform(df_d2[['age']])
+> # Weight polyuria and polydipsia more (they are classic diabetes symptoms)
+> df_d2['polyuria'] = df_d2['polyuria'] * 2
+> df_d2['polydipsia'] = df_d2['polydipsia'] * 2
+>
+> km2 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_diabetes['kmeans_weighted'] = km2.fit_predict(df_d2)
+>
+> gmm2 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_diabetes['gmm_weighted'] = gmm2.fit_predict(df_d2)
+>
+> # Approach 3: Use only the most relevant features
+> key_features = ['polyuria', 'polydipsia', 'sudden_weight_loss', 'polyphagia',
+>                 'irritability', 'partial_paresis', 'gender', 'age']
+> df_d3 = df_diabetes[key_features].copy()
+> df_d3['age'] = StandardScaler().fit_transform(df_d3[['age']])
+>
+> km3 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_diabetes['kmeans_key'] = km3.fit_predict(df_d3)
+>
+> # Approach 4: Scale all features with StandardScaler
+> df_d4 = df_diabetes.copy().astype(float)
+> df_d4 = pd.DataFrame(StandardScaler().fit_transform(df_d4), columns=df_d4.columns)
+>
+> km4 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_diabetes['kmeans_allscaled'] = km4.fit_predict(df_d4)
+>
+> gmm4 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_diabetes['gmm_allscaled'] = gmm4.fit_predict(df_d4)
+>
+> agg4 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_diabetes['agg_allscaled'] = agg4.fit_predict(df_d4)
+>
+> # Approach 5: Simple rule-based using polyuria + polydipsia as primary signal
+> df_d5 = df_diabetes.copy()
+> score = df_d5['polyuria'] + df_d5['polydipsia'] + df_d5['sudden_weight_loss'] + df_d5['irritability'] + df_d5['partial_paresis'] + df_d5['polyphagia'] + df_d5
+['gender']
+> results_diabetes['rule_based'] = (score >= 3).astype(int).values
+>
+> print("Diabetes clustering done. Methods tried:", list(results_diabetes.keys()))
+> for k, v in results_diabetes.items():
+>     print(f"  {k}: cluster 0 = {sum(v==0)}, cluster 1 = {sum(v==1)}")
+>
+> # Use GMM with weighted features as primary choice (usually works well for mixed data)
+> # But let's pick the one that gives a reasonable split
+> best_diabetes = results_diabetes['kmeans_weighted']
+> print(f"\nSelected for diabetes: kmeans_weighted")
+>
+> # ===================== HEART DATASET =====================
+> print("\n=== Processing Heart Dataset ===")
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+>
+> results_heart = {}
+>
+> # Approach 1: One-hot encode categoricals, scale numericals
+> df_h1 = df_heart.copy()
+> df_h1_num = df_h1[numerical_features].copy()
+> df_h1_num = pd.DataFrame(StandardScaler().fit_transform(df_h1_num), columns=numerical_features)
+>
+> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+> df_h1
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+h3.fit_predict(df_h3)
+>
+> # Approach 4: One-hot with key features weighted
+> df_h4 = df_heart.copy()
+> df_h4_num = df_h4[numerical_features].copy()
+> df_h4_num = pd.DataFrame(StandardScaler().fit_transform(df_h4_num), columns=numerical_features)
+>
+> encoder4 = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+> df_h4_cat = pd.DataFrame(encoder4.fit_transform(df_h4[categorical_features]))
+>
+> df_h4_combined = pd.concat([df_h4_num.reset_index(drop=True), df_h4_cat.reset_index(drop=True)], axis=1)
+>
+> # Weight important features
+> # cp, ca, thal, exang, slope are important - already one-hot encoded
+> # oldpeak and thalach are important numerical features
+> df_h4_combined['oldpeak'] = df_h4_combined['oldpeak'] * 2
+> df_h4_combined['thalach'] = df_h4_combined['thalach'] * 2
+>
+> km_h4 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_heart['kmeans_onehot_weighted'] = km_h4.fit_predict(df_h4_combined)
+>
+> gmm_h4 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_heart['gmm_onehot_weighted'] = gmm_h4.fit_predict(df_h4_combined)
+>
+> # Approach 5: Spectral clustering
+> from sklearn.cluster import SpectralClustering
+> spec_h = SpectralClustering(n_clusters=2, affinity='nearest_neighbors', n_neighbors=10, random_state=42)
+> results_heart['spectral_allscaled'] = spec_h.fit_predict(df_h2)
+>
+> spec_h2 = SpectralClustering(n_clusters=2, affinity='nearest_neighbors', n_neighbors=10, random_state=42)
+> results_heart['spectral_key'] = spec_h2.fit_predict(df_h3)
+>
+> print("Heart clustering done. Methods tried:", list(results_heart.keys()))
+> for k, v in results_heart.items():
+>     print(f"  {k}: cluster 0 = {sum(v==0)}, cluster 1 = {sum(v==1)}")
+>
+> # For heart, GMM on key features typically works well
+> best_heart = results_heart['gmm_key']
+> print(f"\nSelected for heart: gmm_key")
+>
+> # ===================== SAVE RESULTS =====================
+> # Save diabetes results
+> out_diabetes = pd.DataFrame({'pseudo_label': best_diabetes})
+> out_diabetes.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"\nSaved diabetes results: {out_diabetes['pseudo_label'].value_counts().to_dict()}")
+>
+> # Save heart results
+> out_heart = pd.DataFrame({'pseudo_label': best_heart})
+> out_heart.to_csv('/app/output_heart.csv', index=False)
+> print(f"Saved heart results: {out_heart['pseudo_label'].value_counts().to_dict()}")
+>
+> print("\nDone!")
+> EOF
+root@5b075df50935:/app# python3 /app/solve.py
+=== Processing Diabetes Dataset ===
+Diabetes clustering done. Methods tried: ['kmeans', 'gmm', 'agg', 'kmeans_weighted', 'gmm_weighted', 'kmeans_key', 'kmeans_allscaled', 'gmm_allscaled', 'agg_all
+scaled', 'rule_based']
+  kmeans: cluster 0 = 315, cluster 1 = 205
+  gmm: cluster 0 = 329, cluster 1 = 191
+  agg: cluster 0 = 368, cluster 1 = 152
+  kmeans_weighted: cluster 0 = 265, cluster 1 = 255
+  gmm_weighted: cluster 0 = 233, cluster 1 = 287
+  kmeans_key: cluster 0 = 239, cluster 1 = 281
+  kmeans_allscaled: cluster 0 = 242, cluster 1 = 278
+  gmm_allscaled: cluster 0 = 233, cluster 1 = 287
+  agg_allscaled: cluster 0 = 374, cluster 1 = 146
+  rule_based: cluster 0 = 220, cluster 1 = 300
+
+Selected for diabetes: kmeans_weighted
+
+=== Processing Heart Dataset ===
+Traceback (most recent call last):
+  File "/app/solve.py", line 110, in <module>
+    results_heart['kmeans_onehot'] = km_h1.fit_predict(df_h1_combined)
+                                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py", line 1064, in fit_predict
+    return self.fit(X, sample_weight=sample_weight).labels_
+           ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/sklearn/base.py", line 1389, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/usr/local/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py", line 1454, in fit
+    X = validate_data(
+        self,
+    ...<5 lines>...
+        accept_large_sparse=False,
+    )
+  File "/usr/local/lib/python3.13/site-packages/sklearn/utils/validation.py", line 2919, in validate_data
+    _check_feature_names(_estimator, X, reset=reset)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/sklearn/utils/validation.py", line 2715, in _check_feature_names
+    feature_names_in = _get_feature_names(X)
+  File "/usr/local/lib/python3.13/site-packages/sklearn/utils/validation.py", line 2417, in _get_feature_names
+    raise TypeError(
+    ...<6 lines>...
+    )
+TypeError: Feature names are only supported if all input features have string names, but your input has ['int', 'str'] as feature name / column name types. If y
+ou want feature names to be stored and validated, you must convert them all to strings, by using X.columns = X.columns.astype(str) for example. Otherwise you ca
+n remove feature / column names from your input data, or convert them all to a non-string data type.
+root@5b075df50935:/app#

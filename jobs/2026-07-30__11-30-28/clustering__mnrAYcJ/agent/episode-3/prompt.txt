@@ -1,0 +1,205 @@
+New Terminal Output:
+
+root@25a96eac46b4:/app# cat > /app/solve.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> import sys
+> sys.path.insert(0, '/app/src')
+>
+> from transform.OnehotEncoder import one_hot_encoder
+> from transform.StandardScaler import standard_scaler
+> from cluster.kmean import kmeans
+> from cluster.gaussian_mixture import gaussian_mixture
+> from cluster.spectral import spectral
+> from cluster.agglomerative import *
+> from cluster.bisecting_kmeans import *
+>
+> from sklearn.preprocessing import LabelEncoder
+> from sklearn.decomposition import PCA
+>
+> # ============ DIABETES DATASET ============
+> print("Processing diabetes_data.csv...")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> print(f"Shape: {df_diabetes.shape}")
+> print(df_diabetes.dtypes)
+> print(df_diabetes.head())
+>
+> # Encode gender
+> df_diab_proc = df_diabetes.copy()
+> df_diab_proc['gender'] = df_diab_proc['gender'].map({'Male': 1, 'Female': 0})
+>
+> # Standardize age
+> df_diab_proc = standard_scaler(df_diab_proc, columns=['age'])
+>
+> print("\nDiabetes processed shape:", df_diab_proc.shape)
+> print(df_diab_proc.head())
+>
+> # Try multiple clustering methods
+> X_diab = df_diab_proc.values
+>
+> # KMeans
+> labels_km = kmeans(X_diab, 2)
+> print(f"\nKMeans diabetes - cluster sizes: {np.bincount(labels_km)}")
+>
+> # Gaussian Mixture
+> labels_gm = gaussian_mixture(X_diab, 2)
+> print(f"GMM diabetes - cluster sizes: {np.bincount(labels_gm)}")
+>
+> # Try with PCA
+> pca = PCA(n_components=5)
+> X_diab_pca = pca.fit_transform(X_diab)
+> labels_km_pca = kmeans(X_diab_pca, 2)
+> print(f"KMeans+PCA diabetes - cluster sizes: {np.bincount(labels_km_pca)}")
+>
+> # Save best result for diabetes (try KMeans first, it usually works well for binary features)
+> diab_output = pd.DataFrame({'pseudo_label': labels_km})
+> diab_output.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"\nSaved diabetes output with KMeans")
+>
+> # ============ HEART DATASET ============
+> print("\n\nProcessing heart.csv...")
+> df_heart = pd.read_csv('/app/heart.csv')
+> print(f"Shape: {df_heart.shape}")
+> print(df_heart.dtypes)
+> print(df_heart.head())
+>
+> # Separate numerical and categorical
+> numerical_cols = ['trestbps', 'chol', 'thalach', 'oldpeak']
+> categorical_cols = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+>
+> # One-hot encode categorical features
+> df_heart_proc = df_heart.copy()
+> # Drop 'age' since it's not mentioned in numerical features for heart
+> if 'age' in df_heart_proc.columns:
+>     df_heart_proc = df_heart_proc.drop(columns=['age'])
+>
+> df_heart_proc = one_hot_encoder(df_heart_proc, columns=categorical_cols)
+> df_heart_proc = standard_scaler(df_heart_proc, columns=numerical_cols)
+>
+> print("\nHeart processed shape:", df_heart_proc.shape)
+> print(df_heart_proc.head())
+>
+> X_heart = df_heart_proc.values
+>
+> # KMeans
+> labels_km_h = kmeans(X_heart, 2)
+> print(f"\nKMeans heart - cluster sizes: {np.bincount(labels_km_h)}")
+>
+> # Gaussian Mixture
+> labels_gm_h = gaussian_mixture(X_heart, 2)
+> print(f"GMM heart - cluster sizes: {np.bincount(labels_gm_h)}")
+>
+> # Spectral
+> labels_sp_h = spectral(X_heart, 2)
+> print(f"Spectral heart - cluster sizes: {np.bincount(labels_sp_h)}")
+>
+> # Try with PCA
+> pca_h = PCA(n_components=5)
+> X_heart_pca = pca_h.fit_transform(X_heart)
+> labels_km_pca_h = kmeans(X_heart_pca, 2)
+> print(f"KMeans+PCA heart - cluster sizes: {np.bincount(labels_km_pca_h)}")
+>
+> # Save heart output
+> heart_output = pd.DataFrame({'pseudo_label': labels_km_h})
+> heart_output.to_csv('/app/output_heart.csv', index=False)
+> print(f"\nSaved heart output with KMeans")
+>
+> print("\nDone!")
+> EOF
+root@25a96eac46b4:/app# python3 /app/solve.py
+Processing diabetes_data.csv...
+Shape: (520, 16)
+age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+3   45   Male         0           0                   1         1  ...             0                1                0                 0         0        0
+4   60   Male         1           1                   1         1  ...             1                1                1                 1         1        1
+
+[5 rows x 16 columns]
+
+Diabetes processed shape: (520, 16)
+        age  gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesit
+y
+0 -0.661367       1         0           1                   0         1  ...             0                1                0                 1         1
+1
+1  0.821362       1         0           0                   0         1  ...             0                0                1                 0         1
+0
+2 -0.578993       1         1           0                   0         1  ...             0                1                0                 1         1
+0
+3 -0.249498       1         0           0                   1         1  ...             0                1                0                 0         0
+0
+4  0.986110       1         1           1                   1         1  ...             1                1                1                 1         1
+1
+
+[5 rows x 16 columns]
+
+KMeans diabetes - cluster sizes: [217 303]
+GMM diabetes - cluster sizes: [183 337]
+KMeans+PCA diabetes - cluster sizes: [303 217]
+
+Saved diabetes output with KMeans
+
+
+Processing heart.csv...
+Shape: (1025, 13)
+age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+3   61    1   0       148   203    0        1      161      0      0.0      2   1     3
+4   62    0   0       138   294    1        1      106      0      1.9      1   3     2
+
+Heart processed shape: (1025, 29)
+   trestbps      chol   thalach   oldpeak  sex_0  sex_1  cp_0  cp_1  cp_2  cp_3  ...  slope_2  ca_0  ca_1  ca_2  ca_3  ca_4  thal_0  thal_1  thal_2  thal_3
+0 -0.377636 -0.659332  0.821321 -0.060888    0.0    1.0   1.0   0.0   0.0   0.0  ...      1.0   0.0   0.0   1.0   0.0   0.0     0.0     0.0     0.0     1.0
+1  0.479107 -0.833861  0.255968  1.727137    0.0    1.0   1.0   0.0   0.0   0.0  ...      0.0   1.0   0.0   0.0   0.0   0.0     0.0     0.0     0.0     1.0
+2  0.764688 -1.396233 -1.048692  1.301417    0.0    1.0   1.0   0.0   0.0   0.0  ...      0.0   1.0   0.0   0.0   0.0   0.0     0.0     0.0     0.0     1.0
+3  0.936037 -0.833861  0.516900 -0.912329    0.0    1.0   1.0   0.0   0.0   0.0  ...      1.0   0.0   1.0   0.0   0.0   0.0     0.0     0.0     0.0     1.0
+4  0.364875  0.930822 -1.874977  0.705408    1.0    0.0   1.0   0.0   0.0   0.0  ...      0.0   0.0   0.0   0.0   1.0   0.0     0.0     0.0     1.0     0.0
+
+[5 rows x 29 columns]
+
+KMeans heart - cluster sizes: [404 621]
+GMM heart - cluster sizes: [144 881]
+/usr/local/lib/python3.13/site-packages/sklearn/manifold/_spectral_embedding.py:329: UserWarning: Graph is not fully connected, spectral embedding may not work
+as expected.
+  warnings.warn(
+Spectral heart - cluster sizes: [1014   11]
+KMeans+PCA heart - cluster sizes: [405 620]
+
+Saved heart output with KMeans
+
+Done!
+root@25a96eac46b4:/app#

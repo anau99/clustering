@@ -1,0 +1,21 @@
+New Terminal Output:
+
+root@25a96eac46b4:/app# cat /app/src/cluster/agglomerative.py
+from sklearn.cluster import AgglomerativeClustering
+
+
+def agglomerative(X, k):
+    model = AgglomerativeClustering(
+        n_clusters=k,
+        linkage="ward"
+    )
+    return model.fit_predict(X)root@25a96eac46b4:/app# cat /app/src/cluster/bisecting_kmeans.py
+from sklearn.cluster import BisectingKMeans
+
+
+def bisecting_kmeans(X, k):
+    model = BisectingKMeans(
+        n_clusters=k,
+        random_state=42
+    )
+    return model.fit_predict(X)root@25a96eac46b4:/app#

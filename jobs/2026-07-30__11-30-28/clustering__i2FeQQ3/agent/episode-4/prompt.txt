@@ -1,0 +1,190 @@
+New Terminal Output:
+
+root@e8904edca287:/app# cat > /app/solve.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> import sys
+> sys.path.insert(0, '/app/src')
+>
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+> from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+> from sklearn.decomposition import PCA
+>
+> # ===== DIABETES DATASET =====
+> print("Processing diabetes dataset...")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+>
+> # Encode gender as binary
+> df_diabetes['gender_encoded'] = (df_diabetes['gender'] == 'Male').astype(int)
+> df_diabetes_features = df_diabetes.drop(columns=['gender'])
+>
+> # All features are now numeric. Scale age, keep binary features as-is
+> numerical_cols_d = ['age']
+> categorical_cols_d = [c for c in df_diabetes_features.columns if c != 'age']
+>
+> # Approach 1: Scale age, keep binary as-is, use KMeans
+> X_diabetes = df_diabetes_features.copy()
+> scaler = StandardScaler()
+> X_diabetes['age'] = scaler.fit_transform(X_diabetes[['age']])
+> X_d = X_diabetes.values
+>
+> # Try multiple algorithms
+> results_diabetes = {}
+>
+> # KMeans
+> km = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_diabetes['kmeans'] = km.fit_predict(X_d)
+>
+> # GMM
+> gmm = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_diabetes['gmm'] = gmm.fit_predict(X_d)
+>
+> # Agglomerative
+> agg = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_diabetes['agg'] = agg.fit_predict(X_d)
+>
+> # Try with PCA
+> pca = PCA(n_components=5)
+> X_d_pca = pca.fit_transform(X_d)
+> km_pca = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_diabetes['kmeans_pca'] = km_pca.fit_predict(X_d_pca)
+>
+> # Approach 2: One-hot encode gender and use all features
+> df_d2 = df_diabetes.copy()
+> df_d2 = pd.get_dummies(df_d2, columns=['gender'], drop_first=False)
+> scaler2 = StandardScaler()
+> df_d2['age'] = scaler2.fit_transform(df_d2[['age']])
+> X_d2 = df_d2.values
+>
+> km2 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_diabetes['kmeans_onehot'] = km2.fit_predict(X_d2)
+>
+> # Approach 3: Weight the important features (polyuria, polydipsia are key diabetes symptoms)
+> X_d3 = df_diabetes_features.copy()
+> X_d3['age'] = scaler.fit_transform(X_d3[['age']])
+> # Give more weight to key diabetes symptoms
+> for col in ['polyuria', 'polydipsia', 'sudden_weight_loss', 'polyphagia', 'gender_encoded']:
+>     if col in X_d3.columns:
+>         X_d3[col] = X_d3[col] * 2.0
+> X_d3_vals = X_d3.values
+>
+> km3 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_diabetes['kmeans_weighted'] = km3.fit_predict(X_d3_vals)
+>
+> gmm3 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_diabetes['gmm_weighted'] = gmm3.fit_predict(X_d3_vals)
+>
+> # Try spectral clustering
+> spec = SpectralClustering(n_clusters=2, affinity='nearest_neighbors', n_neighbors=10, random_state=42)
+> results_diabetes['spectral'] = spec.fit_predict(X_d)
+>
+> # Print cluster sizes for each approach
+> print("\nDiabetes cluster sizes:")
+> for name, labels in results_diabetes.items():
+>     unique, counts = np.unique(labels, return_counts=True)
+>     print(f"  {name}: {dict(zip(unique, counts))}")
+>
+> # Choose the weighted kmeans approach (polyuria/polydipsia are strong indicators of diabetes)
+> # The ground truth is likely diabetes positive/negative
+> best_diabetes = results_diabetes['kmeans_weighted']
+>
+> # Save diabetes results
+> out_d = pd.DataFrame({'pseudo_label': best_diabetes})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"\nSaved diabetes results. Cluster distribution: {np.bincount(best_diabetes)}")
+>
+> # ===== HEART DATASET =====
+> print("\nProcessing heart dataset...")
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> numerical_cols_h = ['trestbps', 'chol', 'thalach', 'oldpeak']
+> categorical_cols_h = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+>
+> results_heart = {}
+>
+> # Approach 1: One-hot encode categoricals, scale numericals
+> df_h1 = df_heart.copy()
+> df_h1_cat = pd.get_dummies(df_h1[categorical_cols_h], columns=categorical_cols_h)
+> scaler_h = StandardScaler()
+> df_h1_num = pd.DataFrame(scaler_h.fit_transform(df_h1[numerical_cols_h]), columns=numerical_cols_h)
+> X_h1 = pd.concat([df_h1_num, df_h1_cat], axis=1).values
+>
+> km_h1 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_heart['kmeans_onehot'] = km_h1.fit_predict(X_h1)
+>
+> gmm_h1 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_heart['gmm_onehot'] = gmm_h1.fit_predict(X_h1)
+>
+> agg_h1 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_heart['agg_onehot'] = agg_h1.fit_predict(X_h1)
+>
+> # Approach 2: Scale all features as numeric (treat categoricals as ordinal)
+> df_h2 = df_heart.copy()
+> scaler_h2 = StandardScaler()
+> X_h2 = scaler_h2.fit_transform(df_h2.values)
+>
+> km_h2 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_heart['kmeans_allscaled'] = km_h2.fit_predict(X_h2)
+>
+> gmm_h2 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_heart['gmm_allscaled'] = gmm_h2.fit_predict(X_h2)
+>
+> # Approach 3: Feature weighting - key heart disease indicators
+> df_h3 = df_heart.copy()
+> scaler_h3 = StandardScaler()
+> X_h3 = pd.DataFrame(scaler_h3.fit_transform(df_h3.values), columns=df_h3.columns)
+> # Weight important features for heart disease
+> for col in ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']:
+>     X_h3[col] = X_h3[col] * 1.5
+> X_h3_vals = X_h3.values
+>
+> km_h3 = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_heart['kmeans_weighted'] = km_h3.fit_predict(X_h3_vals)
+>
+> gmm_h3 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=10)
+> results_heart['gmm_weighted'] = gmm_h3.fit_predict(X_h3_vals)
+>
+> # Approach 4: PCA + clustering
+> pca_h = PCA(n_components=5)
+> X_h_pca = pca_h.fit_transform(X_h1)
+> km_h_pca = KMeans(n_clusters=2, init='k-means++', n_init=50, random_state=42)
+> results_heart['kmeans_pca'] = km_h_pca.fit_predict(X_h_pca)
+>
+> # Spectral
+> spec_h = SpectralClustering(n_clusters=2, affinity='nearest_neighbors', n_neighbors=10, random_state=42)
+> results_heart['spectral'] = spec_h.fit_predict(X_h2)
+>
+> # Print cluster sizes
+> print("\nHeart cluster sizes:")
+> for name, labels in results_heart.items():
+>     unique, counts = np.unique(labels, return_counts=True)
+>     print(f"  {name}: {dict(zip(unique, counts))}")
+>
+> # Choose gmm_weighted as it's likely to capture the structure well
+> best_heart = results_heart['gmm_weighted']
+>
+> # Save heart results
+> out_h = pd.DataFrame({'pseudo_label': best_heart})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+> print(f"\nSaved heart results. Cluster distribution: {np.bincount(best_heart)}")
+>
+> print("\nDone!")
+> EOF
+root@e8904edca287:/app# python3 /app/solve.py
+Processing diabetes dataset...
+
+Diabetes cluster sizes:
+  kmeans: {np.int32(0): np.int64(315), np.int32(1): np.int64(205)}
+  gmm: {np.int64(0): np.int64(329), np.int64(1): np.int64(191)}
+  agg: {np.int64(0): np.int64(368), np.int64(1): np.int64(152)}
+  kmeans_pca: {np.int32(0): np.int64(315), np.int32(1): np.int64(205)}
+  kmeans_onehot: {np.int32(0): np.int64(318), np.int32(1): np.int64(202)}
+  kmeans_weighted: {np.int32(0): np.int64(269), np.int32(1): np.int64(251)}
+  gmm_weighted: {np.int64(0): np.int64(233), np.int64(1): np.int64(287)}
+  spectral: {np.int32(0): np.int64(149), np.int32(1): np.int64(371)}
+
+Saved diabetes results. Cluster distribution: [269 251]
+
+Processing heart dataset...
+

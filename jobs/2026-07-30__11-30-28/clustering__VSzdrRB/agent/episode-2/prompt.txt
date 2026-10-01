@@ -1,0 +1,95 @@
+New Terminal Output:
+
+root@5b075df50935:/app# cat /app/src/cluster/kmean.py
+from sklearn.cluster import KMeans
+
+
+def kmeans(X, k):
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init="auto",
+        random_state=42
+    )
+    return model.fit_predict(X)root@5b075df50935:/app# cat /app/src/cluster/gaussian_mixture.py
+from sklearn.mixture import GaussianMixture
+
+
+def gaussian_mixture(X, k):
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="full",
+        random_state=42
+    )
+    return model.fit_predict(X)root@5b075df50935:/app# cat /app/src/cluster/spectral.py
+from sklearn.cluster import SpectralClustering
+
+
+def spectral(X, k):
+    model = SpectralClustering(
+        n_clusters=k,
+        affinity="nearest_neighbors",
+        random_state=42
+    )
+    return model.fit_predict(X)root@5b075df50935:/app# cat /app/src/transform/StandardScaler.py
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+
+def standard_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Standardize selected columns.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = StandardScaler()
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return resultroot@5b075df50935:/app# cat /app/src/transform/OnehotEncoder.py
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+
+
+def one_hot_encoder(df: pd.DataFrame,columns=None,encode_all=False) -> pd.DataFrame:
+
+    result = df.copy()
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OneHotEncoder(
+        sparse_output=False,
+        handle_unknown="ignore"
+    )
+
+    encoded = encoder.fit_transform(result[columns])
+
+    encoded_df = pd.DataFrame(
+        encoded,
+        columns=encoder.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, encoded_df], axis=1)
+
+    return resultroot@5b075df50935:/app# wc -l /app/diabetes_data.csv /app/heart.csv
+  521 /app/diabetes_data.csv
+ 1026 /app/heart.csv
+ 1547 total
+root@5b075df50935:/app#

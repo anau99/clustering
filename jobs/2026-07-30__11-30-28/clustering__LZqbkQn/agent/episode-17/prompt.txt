@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> out_d = pd.DataFrame({'pseudo_label': labels_d})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+>
+> out_h = pd.DataFrame({'pseudo_label': labels_h})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+>
+> print("\nFiles saved!")
+> print(f"Diabetes shape: {out_d.shape}, values: {sorted(out_d['pseudo_label'].unique())}")
+> print(f"Heart shape: {out_h.shape}, values: {sorted(out_h['pseudo_label'].unique())}")
+> EOF
+root@e123fae6e01b:/app# python /app/save_final.py
+Diabetes: [247 273]
+Heart: [460 565]
+Heart verification: ca_sep=0.890, exang_sep=0.948
+
+Files saved!
+Diabetes shape: (520, 1), values: [np.int32(0), np.int32(1)]
+Heart shape: (1025, 1), values: [np.int64(0), np.int64(1)]
+root@e123fae6e01b:/app# head -3 /app/output_diabetes_data.csv && echo '---' && tail -3 /app/output_diabetes_data.csv && echo '---' && wc -l /app/output_diabetes
+_data.csv
+pseudo_label
+0
+0
+---
+1
+0
+0
+---
+521 /app/output_diabetes_data.csv
+root@e123fae6e01b:/app# head -3 /app/output_heart.csv && echo '---' && tail -3 /app/output_heart.csv && echo '---' && wc -l /app/output_heart.csv
+pseudo_label
+1
+1
+---
+1
+0
+1
+---
+1026 /app/output_heart.csv
+root@e123fae6e01b:/app#

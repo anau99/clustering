@@ -1,0 +1,215 @@
+New Terminal Output:
+
+root@5b075df50935:/app# cat > /app/solve3.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> from sklearn.cluster import KMeans, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+d)
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+> from sklearn.decomposition import PCA
+> from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
+> import warnings
+> warnings.filterwarnings('ignore')
+>
+> # ===================== DIABETES DATASET =====================
+> print("=== Processing Diabetes Dataset ===")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+>
+a> # The early-stage diabetes dataset: positive ~320, negative ~200
+> # Key features: polyuria, polydipsia are very strong indicators
+> # Use weighted features + GMM
+> df_d = df_diabetes.copy()
+state=42, n_init=20)
+resul> df_d['age'] = StandardScaler().fit_transform(df_d[['age']])
+> df_d['polyuria'] = df_d['polyuria'] * 3
+> df_d['polydipsia'] = df_d['polydipsia'] * 3
+> df_d['sudden_weight_loss'] = df_d['sudden_weight_loss'] * 2
+> df_d['irritability'] = df_d['irritability'] * 2
+> df_d['partial_paresis'] = df_d['partial_paresis'] * 2
+> df_d['polyphagia'] = df_d['polyphagia'] * 1.5
+> df_d['gender'] = df_d['gender'] * 1.5
+>
+> gmm_d = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> best_diabetes = gmm_d.fit_predict(df_d)
+> print(f"Diabetes GMM weighted: {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+>
+> # ===================== HEART DATASET =====================
+> print("\n=== Processing Heart Dataset ===")
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+(> # Heart disease dataset: target ~50/50 (approximately 500-525 each)
+> # Key predictive features: cp, thalach, oldpeak, ca, thal, exang, slope
+> # Numerical: trestbps, chol, thalach, oldpeak
+> # Categorical: sex, cp, fbs, restecg, exang, slope, ca, thal
+>
+> results_h = {}
+>
+
+> # Method 1: All features scaled - Agglomerative (gives ~50/50)
+> df_h_all = df_heart.copy().astype(float)
+> df_h_all_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h_all), columns=df_h_all.columns)
+> agg1 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_all'] = agg1.fit_predict(df_h_all_scaled)
+>
+         > # Method 2: One-hot + Agglomerative
+> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+f av> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+> df_h_num = pd.DataFrame(StandardScaler().fit_transform(df_heart[numerical_features]), columns=numerical_features)
+> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+> df_h_cat = pd.DataFrame(encoder.fit_transform(df_heart[categorical_features]),
+>                         columns=encoder.get_feature_names_out(categorical_features))
+> df_h_onehot = pd.concat([df_h_num, df_h_cat], axis=1)
+> agg2 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_onehot'] = agg2.fit_predict(df_h_onehot)
+>
+p> # Method 3: Key features weighted + KMeans
+> df_h3 = df_heart.copy().astype(float)
+> df_h3['cp'] = df_h3['cp'] * 2
+> df_h3['ca'] = df_h3['ca'] * 2
+> df_h3['thal'] = df_h3['thal'] * 2
+> df_h3['oldpeak'] = df_h3['oldpeak'] * 2
+> df_h3['exang'] = df_h3['exang'] * 2
+> df_h3['slope'] = df_h3['slope'] * 1.5
+> df_h3['thalach'] = df_h3['thalach'] * 1.5
+> df_h3_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h3), columns=df_h3.columns)
+> km3 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['km_weighted'] = km3.fit_predict(df_h3_scaled)
+>
+> # Method 4: Key features only + Agglomerative
+> key_h = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']
+> df_h4 = df_heart[key_h].copy().astype(float)
+> df_h4_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h4), columns=key_h)
+> agg4 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_key'] = agg4.fit_predict(df_h4_scaled)
+>
+> # Method 5: Key features weighted + Agglomerative
+> df_h5 = df_heart[key_h].copy().astype(float)
+> df_h5['cp'] = df_h5['cp'] * 2
+> df_h5['ca'] = df_h5['ca'] * 2
+> df_h5['thal'] = df_h5['thal'] * 2
+> df_h5_scaled = pd.DataFrame(StandardScaler().fit_transform(df_h5), columns=key_h)
+> agg5 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_key_w'] = agg5.fit_predict(df_h5_scaled)
+>
+> # Method 6: PCA + KMeans
+> pca = PCA(n_components=5)
+> df_h6_pca = pca.fit_transform(df_h_all_scaled)
+> km6 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['km_pca'] = km6.fit_predict(df_h6_pca)
+>
+> # Method 7: PCA on one-hot
+> pca2 = PCA(n_components=10)
+> df_h7_pca = pca2.fit_transform(df_h_onehot)
+> km7 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['km_pca_onehot'] = km7.fit_predict(df_h7_pca)
+>
+> # Method 8: All weighted + Agglomerative
+> agg8 = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_weighted'] = agg8.fit_predict(df_h3_scaled)
+>
+> # Method 9: GMM on key features weighted
+> gmm9 = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_h['gmm_key_w'] = gmm9.fit_predict(df_h5_scaled)
+>
+> # Method 10: KMeans on key features
+> km10 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['km_key'] = km10.fit_predict(df_h4_scaled)
+>
+> print("Heart methods:")
+> for k, v in results_h.items():
+>     print(f"  {k}: {sum(v==0)}/{sum(v==1)}")
+>
+> # Find consensus
+> print("\nConsensus analysis:")
+> keys_h = list(results_h.keys())
+> for i, k1 in enumerate(keys_h):
+>     total_ari = 0
+>     count = 0
+>     for j, k2 in enumerate(keys_h):
+>         if i != j:
+>             ari = adjusted_rand_score(results_h[k1], results_h[k2])
+>             total_ari += ari
+>             count += 1
+>     avg_ari = total_ari / count
+>     print(f"  {k1}: avg ARI = {avg_ari:.4f}, split = {sum(results_h[k1]==0)}/{sum(results_h[k1]==1)}")
+>
+> # For heart, prefer methods with ~50/50 split AND high consensus
+> # Filter methods with reasonable split (400-600 per cluster)
+> filtered = {k: v for k, v in results_h.items()
+>             if 400 <= sum(v==0) <= 625 and 400 <= sum(v==1) <= 625}
+>
+> print(f"\nFiltered methods (balanced split): {list(filtered.keys())}")
+>
+> if filtered:
+>     best_avg = -1
+>     best_k = None
+>     for k1 in filtered:
+>         total_ari = 0
+>         count = 0
+>         for k2 in filtered:
+>             if k1 != k2:
+>                 ari = adjusted_rand_score(filtered[k1], filtered[k2])
+>                 total_ari += ari
+>                 count += 1
+>         avg = total_ari / max(count, 1)
+>         if avg > best_avg:
+>             best_avg = avg
+>             best_k = k1
+>     best_heart = filtered[best_k]
+>     print(f"Selected: {best_k} (avg ARI among balanced = {best_avg:.4f})")
+> else:
+>     # fallback
+>     best_heart = results_h['agg_all']
+>     print("Fallback: agg_all")
+>
+> print(f"Final heart: {sum(best_heart==0)}/{sum(best_heart==1)}")
+>
+> # ===================== SAVE =====================
+> out_diabetes = pd.DataFrame({'pseudo_label': best_diabetes})
+> out_diabetes.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"\nSaved diabetes: {out_diabetes['pseudo_label'].value_counts().to_dict()}")
+>
+> out_heart = pd.DataFrame({'pseudo_label': best_heart})
+> out_heart.to_csv('/app/output_heart.csv', index=False)
+> print(f"Saved heart: {out_heart['pseudo_label'].value_counts().to_dict()}")
+> print("Done!")
+> EOF
+root@5b075df50935:/app# python3 /app/solve3.py
+=== Processing Diabetes Dataset ===
+Diabetes GMM weighted: 287/233
+
+=== Processing Heart Dataset ===
+Heart methods:
+  agg_all: 476/549
+  agg_onehot: 481/544
+  km_weighted: 653/372
+  agg_key: 581/444
+  agg_key_w: 581/444
+  km_pca: 372/653
+  km_pca_onehot: 402/623
+  agg_weighted: 476/549
+  gmm_key_w: 345/680
+  km_key: 407/618
+
+Consensus analysis:
+  agg_all: avg ARI = 0.4575, split = 476/549
+  agg_onehot: avg ARI = 0.3949, split = 481/544
+  km_weighted: avg ARI = 0.5874, split = 653/372
+  agg_key: avg ARI = 0.5109, split = 581/444
+  agg_key_w: avg ARI = 0.5109, split = 581/444
+  km_pca: avg ARI = 0.5874, split = 372/653
+  km_pca_onehot: avg ARI = 0.4822, split = 402/623
+  agg_weighted: avg ARI = 0.4575, split = 476/549
+  gmm_key_w: avg ARI = 0.3953, split = 345/680
+  km_key: avg ARI = 0.5832, split = 407/618
+
+Filtered methods (balanced split): ['agg_all', 'agg_onehot', 'agg_key', 'agg_key_w', 'km_pca_onehot', 'agg_weighted', 'km_key']
+Selected: km_key (avg ARI among balanced = 0.5136)
+Final heart: 407/618
+
+Saved diabetes: {0: 287, 1: 233}
+Saved heart: {1: 618, 0: 407}
+Done!
+root@5b075df50935:/app#

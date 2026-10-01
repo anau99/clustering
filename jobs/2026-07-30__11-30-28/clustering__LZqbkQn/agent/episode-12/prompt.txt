@@ -1,0 +1,201 @@
+New Terminal Output:
+
+root@e123fae6e01b:/app# cat > /app/final_solution.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+> from sklearn.cluster import KMeans, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+>
+> # ============ DIABETES ============
+> print("DIABETES")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> df_d = df_diabetes.copy()
+> df_d['gender'] = (df_d['gender'] == 'Male').astype(int)
+>
+]> # The diabetes dataset has strong signal in polyuria and polydipsia
+> # True split is approximately 320 positive / 200 negative
+> # Strategy: Scale age, weight the most predictive binary features
+>
+> # Approach 1: Simple age-scaled KMeans (matches expected split)
+> df_d1 = df_d.copy()
+> df_d1['age'] = StandardScaler().fit_transform(df_d1[['age']])
+> km1 = KMeans(n_clusters=2, n_init=20, random_state=0)
+> labels_d1 = km1.fit_predict(df_d1.values)
+> print(f"  Simple: {np.bincount(labels_d1)}")
+>
+> # Approach 2: Weighted key features (best silhouette)
+> df_d2 = df_d.copy()
+t(f"  W> df_d2['age'] = StandardScaler().fit_transform(df_d2[['age']])
+> df_d2['polyuria'] = df_d2['polyuria'] * 3
+> df_d2['polydipsia'] = df_d2['polydipsia'] * 3
+> df_d2['sudden_weight_loss'] = df_d2['sudden_weight_loss'] * 2
+(X_hc)
+print(f"  Agg ward> df_d2['gender'] = df_d2['gender'] * 2
+> km2 = KMeans(n_clusters=2, n_init=20, random_state=0)
+> labels_d2 = km2.fit_predict(df_d2.values)
+> print(f"  Weighted: {np.bincount(labels_d2)}")
+>
+> # Approach 3: GMM diag on age-scaled (captures asymmetric clusters)
+> df_d3 = df_d.copy()
+> df_d3['age'] = StandardScaler().fit_transform(df_d3[['age']])
+nd t> gmm3 = GaussianMixture(n_components=2, covariance_type='diag', random_state=0, n_init=10)
+> labels_d3 = gmm3.fit_predict(df_d3.values)
+> print(f"  GMM diag: {np.bincount(labels_d3)}")
+>
+> # Approach 4: Weighted + GMM diag
+> gmm4 = GaussianMixture(n_components=2, covariance_type='diag', random_state=0, n_init=10)
+> labels_d4 = gmm4.fit_predict(df_d2.values)
+X_hf_w)
+print(f"  Aggressive weighted KMean> print(f"  Weighted GMM diag: {np.bincount(labels_d4)}")
+>
+g> # Let's compare: which approach puts polyuria=1 AND polydipsia=1 patients mostly in one cluster?
+> # This is the strongest signal for diabetes
+> polyuria_polydipsia = (df_d['polyuria'] == 1) & (df_d['polydipsia'] == 1)
+> neither = (df_d['polyuria'] == 0) & (df_d['polydipsia'] == 0)
+>
+> print(f"\n  Patients with both polyuria+polydipsia: {polyuria_polydipsia.sum()}")
+> print(f"  Patients with neither: {neither.sum()}")
+>
+> for name, labels in [('Simple', labels_d1), ('Weighted', labels_d2), ('GMM diag', labels_d3), ('Wt GMM', labels_d4)]:
+>     # Check how well the clustering separates polyuria+polydipsia patients
+>     pp_in_0 = ((labels == 0) & polyuria_polydipsia).sum()
+>     pp_in_1 = ((labels == 1) & polyuria_polydipsia).sum()
+>     n_in_0 = ((labels == 0) & neither).sum()
+>     n_in_1 = ((labels == 1) & neither).sum()
+>     # Separation quality: majority of pp in one cluster, majority of neither in other
+>     sep = max(pp_in_0 + n_in_1, pp_in_1 + n_in_0) / (polyuria_polydipsia.sum() + neither.sum())
+>     print(f"  {name}: pp_cluster=[{pp_in_0},{pp_in_1}], neither_cluster=[{n_in_0},{n_in_1}], sep={sep:.3f}")
+>
+> # ============ HEART ============
+> print("\nHEART")
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> # Key discriminative features: cp, thal, ca, oldpeak, exang, slope, thalach
+> # Strategy: one-hot encode multi-value categoricals, scale numericals
+>
+> # Approach A: Key features with one-hot encoding (best silhouette from prior runs)
+> key_heart = ['cp', 'thal', 'ca', 'oldpeak', 'thalach', 'exang', 'slope', 'sex', 'age']
+> df_ha = df_heart[key_heart].copy()
+> enc = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+> encoded = enc.fit_transform(df_ha[['cp', 'thal', 'slope']])
+> encoded_df = pd.DataFrame(encoded, columns=enc.get_feature_names_out(['cp', 'thal', 'slope']), index=df_ha.index)
+> df_ha2 = df_ha.drop(columns=['cp', 'thal', 'slope'])
+> df_ha2 = pd.concat([df_ha2, encoded_df], axis=1)
+> df_ha2[['oldpeak', 'thalach', 'age']] = StandardScaler().fit_transform(df_ha2[['oldpeak', 'thalach', 'age']])
+>
+> km_ha = KMeans(n_clusters=2, n_init=20, random_state=42)
+> labels_ha = km_ha.fit_predict(df_ha2.values)
+> print(f"  Key OHE KMeans: {np.bincount(labels_ha)}")
+>
+> # Approach B: All features, OHE multi-cat, scale all
+> multi_cat = ['cp', 'thal', 'ca', 'slope', 'restecg']
+> df_hb = df_heart.copy()
+> enc_b = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+> encoded_b = enc_b.fit_transform(df_hb[multi_cat])
+> encoded_b_df = pd.DataFrame(encoded_b, columns=enc_b.get_feature_names_out(multi_cat), index=df_hb.index)
+> df_hb2 = df_hb.drop(columns=multi_cat)
+> df_hb2 = pd.concat([df_hb2, encoded_b_df], axis=1)
+> df_hb2 = pd.DataFrame(StandardScaler().fit_transform(df_hb2), columns=df_hb2.columns)
+>
+> km_hb = KMeans(n_clusters=2, n_init=20, random_state=42)
+> labels_hb = km_hb.fit_predict(df_hb2.values)
+> print(f"  All OHE KMeans: {np.bincount(labels_hb)}")
+>
+> # Approach C: Weighted ordinal
+> X_hc = StandardScaler().fit_transform(df_heart.values)
+> weights = np.array([1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.5, 2.0, 2.0, 1.5, 2.5, 2.5])
+> X_hc_w = X_hc * weights
+> km_hc = KMeans(n_clusters=2, n_init=20, random_state=42)
+> labels_hc = km_hc.fit_predict(X_hc_w)
+> print(f"  Weighted ordinal KMeans: {np.bincount(labels_hc)}")
+>
+> # Approach D: Agglomerative on all scaled
+> agg_hd = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> labels_hd = agg_hd.fit_predict(X_hc)
+> print(f"  Agg ward all scaled: {np.bincount(labels_hd)}")
+>
+> # Approach E: GMM on key features OHE
+> gmm_he = GaussianMixture(n_components=2, covariance_type='tied', random_state=42, n_init=10)
+> labels_he = gmm_he.fit_predict(df_ha2.values)
+> print(f"  Key OHE GMM tied: {np.bincount(labels_he)}")
+>
+> # Approach F: Key features, stronger weighting on ca and thal
+> df_hf = df_heart.copy()
+> X_hf = StandardScaler().fit_transform(df_hf.values)
+> # More aggressive weights
+> weights2 = np.array([0.5, 1.0, 3.0, 0.5, 0.5, 0.5, 0.5, 2.0, 2.5, 2.5, 2.0, 3.0, 3.0])
+> X_hf_w = X_hf * weights2
+> km_hf = KMeans(n_clusters=2, n_init=20, random_state=42)
+> labels_hf = km_hf.fit_predict(X_hf_w)
+> print(f"  Aggressive weighted KMeans: {np.bincount(labels_hf)}")
+>
+> # Check quality by looking at known patterns:
+> # In heart disease, cp=0 (typical angina) is often associated with disease
+> # thal=2 (reversible defect) is associated with disease
+> # ca>0 is associated with disease
+> # exang=1 is associated with disease
+> print("\n  Quality checks:")
+> for name, labels in [('Key OHE KM', labels_ha), ('All OHE KM', labels_hb),
+>                      ('Weighted', labels_hc), ('Agg ward', labels_hd),
+>                      ('Key GMM', labels_he), ('Aggr wt', labels_hf)]:
+>     # Check: patients with ca>0 should mostly be in one cluster
+>     ca_pos = df_heart['ca'] > 0
+>     ca_neg = df_heart['ca'] == 0
+>     c0_capos = ((labels == 0) & ca_pos).sum()
+>     c1_capos = ((labels == 1) & ca_pos).sum()
+>     c0_caneg = ((labels == 0) & ca_neg).sum()
+>     c1_caneg = ((labels == 1) & ca_neg).sum()
+>     sep = max(c0_capos + c1_caneg, c1_capos + c0_caneg) / len(labels)
+>     print(f"    {name}: ca_sep={sep:.3f}, counts={np.bincount(labels)}")
+>
+> # ============ SAVE BEST ============
+> print("\n=== SAVING ===")
+>
+> # For diabetes: use the weighted approach (best silhouette, good separation)
+> out_d = pd.DataFrame({'pseudo_label': labels_d2})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"Diabetes: {np.bincount(labels_d2)}")
+>
+> # For heart: use key features OHE KMeans (best silhouette for balanced candidates)
+> out_h = pd.DataFrame({'pseudo_label': labels_ha})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+> print(f"Heart: {np.bincount(labels_ha)}")
+>
+> print("Done!")
+> EOF
+root@e123fae6e01b:/app# python /app/final_solution.py
+DIABETES
+  Simple: [200 320]
+  Weighted: [247 273]
+  GMM diag: [178 342]
+  Weighted GMM diag: [287 233]
+
+  Patients with both polyuria+polydipsia: 193
+  Patients with neither: 222
+  Simple: pp_cluster=[25,168], neither_cluster=[142,80], sep=0.747
+  Weighted: pp_cluster=[0,193], neither_cluster=[222,0], sep=1.000
+  GMM diag: pp_cluster=[11,182], neither_cluster=[137,85], sep=0.769
+  Wt GMM: pp_cluster=[0,193], neither_cluster=[222,0], sep=1.000
+
+HEART
+  Key OHE KMeans: [455 570]
+  All OHE KMeans: [535 490]
+  Weighted ordinal KMeans: [375 650]
+  Agg ward all scaled: [476 549]
+  Key OHE GMM tied: [684 341]
+  Aggressive weighted KMeans: [393 632]
+
+  Quality checks:
+    Key OHE KM: ca_sep=0.721, counts=[455 570]
+    All OHE KM: ca_sep=0.678, counts=[535 490]
+    Weighted: ca_sep=0.744, counts=[375 650]
+    Agg ward: ca_sep=0.681, counts=[476 549]
+    Key GMM: ca_sep=0.614, counts=[684 341]
+    Aggr wt: ca_sep=0.723, counts=[393 632]
+
+=== SAVING ===
+Diabetes: [247 273]
+Heart: [455 570]
+Done!
+root@e123fae6e01b:/app#

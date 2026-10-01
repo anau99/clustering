@@ -1,0 +1,158 @@
+New Terminal Output:
+
+el']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok')"
+C-c
+Wrote /app/output_diabetes_data.csv and /app/output_heart.csv
+cat > /app/run_cluster.py <<'PY'
+import numpy as np
+import pandas as pd
+
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.cluster import KMeans
+
+
+def kmeans_best_inertia(X, seeds=(0, 1, 2, 3, 4, 7, 11, 42)):
+    best_lab = None
+    best_inertia = np.inf
+    for seed in seeds:
+        km = KMeans(n_clusters=2, n_init=50, random_state=seed)
+        lab = km.fit_predict(X)
+        if km.inertia_ < best_inertia:
+            best_inertia = km.inertia_
+            best_lab = lab
+    return best_lab
+
+
+def cluster_diabetes(in_path, out_path):
+    df = pd.read_csv(in_path)
+    cat_cols = [c for c in df.columns if c != "age"]
+    num_cols = ["age"]
+
+    pre = ColumnTransformer(
+        transformers=[
+            ("num", StandardScaler(), num_cols),
+            ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+        ],
+        remainder="drop",
+    )
+
+    X = pre.fit_transform(df)
+    labels = kmeans_best_inertia(X)
+    pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+
+
+def cluster_heart(in_path, out_path):
+    df = pd.read_csv(in_path)
+
+    cat_cols = ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "thal"]
+    num_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
+
+    pre = ColumnTransformer(
+        transformers=[
+            ("num", StandardScaler(), num_cols),
+            ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+        ],
+        remainder="drop",
+    )
+
+    X = pre.fit_transform(df)
+    labels = kmeans_best_inertia(X)
+    pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+
+
+if __name__ == "__main__":
+    cluster_diabetes("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+    cluster_heart("/app/heart.csv", "/app/output_heart.csv")
+    print("Wrote /app/output_diabetes_data.csv and /app/output_heart.csv")
+PY
+python3 /app/run_cluster.py
+root@3d81a04076cb:/app# ls -la /app/output_diabetes_data.csv /app/output_heart.csv
+-rw-r--r-- 1 root root 1053 Jul 30 05:02 /app/output_diabetes_data.csv
+-rw-r--r-- 1 root root 2063 Jul 30 05:02 /app/output_heart.csv
+root@3d81a04076cb:/app# python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes
+ counts:\n',d['pseudo_label'].value_counts()); print('heart counts:\n',h['pseudo_label'].value_counts()); assert list(d.columns)==['pseudo_label']; assert list(
+h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok')
+"
+diabetes counts:
+ pseudo_label
+0    518
+1      2
+Name: count, dtype: int64
+heart counts:
+ pseudo_label
+0    1022
+1       3
+Name: count, dtype: int64
+format ok
+root@3d81a04076cb:/app# C-c
+bash: C-c: command not found
+root@3d81a04076cb:/app# cat > /app/run_cluster.py <<'PY'
+> import numpy as np
+> import pandas as pd
+>
+> from sklearn.compose import ColumnTransformer
+> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+> from sklearn.cluster import KMeans
+>
+>
+> def kmeans_best_inertia(X, seeds=(0, 1, 2, 3, 4, 7, 11, 42)):
+>     best_lab = None
+>     best_inertia = np.inf
+>     for seed in seeds:
+>         km = KMeans(n_clusters=2, n_init=50, random_state=seed)
+>         lab = km.fit_predict(X)
+>         if km.inertia_ < best_inertia:
+>             best_inertia = km.inertia_
+>             best_lab = lab
+>     return best_lab
+>
+>
+> def cluster_diabetes(in_path, out_path):
+>     df = pd.read_csv(in_path)
+>     cat_cols = [c for c in df.columns if c != "age"]
+>     num_cols = ["age"]
+>
+>     pre = ColumnTransformer(
+>         transformers=[
+>             ("num", StandardScaler(), num_cols),
+>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+>         ],
+>         remainder="drop",
+>     )
+>
+>     X = pre.fit_transform(df)
+>     labels = kmeans_best_inertia(X)
+>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+>
+>
+> def cluster_heart(in_path, out_path):
+>     df = pd.read_csv(in_path)
+>
+>     cat_cols = ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "thal"]
+>     num_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
+>
+>     pre = ColumnTransformer(
+>         transformers=[
+>             ("num", StandardScaler(), num_cols),
+>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+>         ],
+>         remainder="drop",
+>     )
+>
+>     X = pre.fit_transform(df)
+>     labels = kmeans_best_inertia(X)
+>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+>
+>
+> if __name__ == "__main__":
+>     cluster_diabetes("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+>     cluster_heart("/app/heart.csv", "/app/output_heart.csv")
+>     print("Wrote /app/output_diabetes_data.csv and /app/output_heart.csv")
+> PY
+root@3d81a04076cb:/app# python3 /app/run_cluster.py
+ls -la /app/output_diabetes_data.csv /app/output_heart.csv
+python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes counts:', d['pseudo_lab
+el'].value_counts().to_dict()); print('heart counts:', h['pseudo_label'].value_counts().to_dict()); assert list(d.columns)==['pseudo_label']; assert list(h.colu
+mns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok')"
+

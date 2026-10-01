@@ -1,0 +1,28 @@
+New Terminal Output:
+
+head -n 5 /app/output_heart.csv
+/app/diabetes_data.csv -> /app/output_diabetes_data.csv using kmeans scores={'sil': 0.1917311739954175, 'ch': 125.62280423611696, 'db': 1.9970926443738628} labe
+l_counts={1: 274, 0: 246}
+python3 /app/run_cluster.py; echo EXIT:$?
+ls -la /app | sed -n '1,200p'
+python3 - <<'PY'
+import os
+import pandas as pd
+pairs=[('/app/diabetes_data.csv','/app/output_diabetes_data.csv'),('/app/heart.csv','/app/output_heart.csv')]
+for inp,out in pairs:
+    print('\nCHECK',out)
+    assert os.path.exists(out), f'missing {out}'
+    dfi=pd.read_csv(inp)
+    dfo=pd.read_csv(out)
+    print('input_rows',len(dfi),'output_rows',len(dfo))
+    print('columns',dfo.columns.tolist())
+    assert dfo.columns.tolist()==['pseudo_label']
+    assert len(dfo)==len(dfi)
+    vals=set(dfo['pseudo_label'].unique().tolist())
+    print('unique_vals',vals)
+    assert vals.issubset({0,1})
+    print('counts',dfo['pseudo_label'].value_counts().to_dict())
+PY
+head -n 5 /app/output_diabetes_data.csv
+head -n 5 /app/output_heart.csv
+

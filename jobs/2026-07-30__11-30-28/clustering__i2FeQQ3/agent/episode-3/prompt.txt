@@ -1,0 +1,51 @@
+New Terminal Output:
+
+root@e8904edca287:/app# python3 -c "import pandas as pd; df = pd.read_csv('/app/diabetes_data.csv'); print(df['gender'].unique()); print(df.dtypes)"
+<StringArray>
+['Male', 'Female']
+Length: 2, dtype: str
+age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+python3 -c "import pandas as pd; df = pd.read_csv('/app/heart.csv'); print(df.dtypes); print(df.describe())"
+root@e8904edca287:/app# python3 -c "import pandas as pd; df = pd.read_csv('/app/heart.csv'); print(df.dtypes); print(df.describe())"
+age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+               age          sex           cp     trestbps        chol  ...        exang      oldpeak        slope           ca         thal
+count  1025.000000  1025.000000  1025.000000  1025.000000  1025.00000  ...  1025.000000  1025.000000  1025.000000  1025.000000  1025.000000
+mean     54.434146     0.695610     0.942439   131.611707   246.00000  ...     0.336585     1.071512     1.385366     0.754146     2.323902
+std       9.072290     0.460373     1.029641    17.516718    51.59251  ...     0.472772     1.175053     0.617755     1.030798     0.620660
+min      29.000000     0.000000     0.000000    94.000000   126.00000  ...     0.000000     0.000000     0.000000     0.000000     0.000000
+25%      48.000000     0.000000     0.000000   120.000000   211.00000  ...     0.000000     0.000000     1.000000     0.000000     2.000000
+50%      56.000000     1.000000     1.000000   130.000000   240.00000  ...     0.000000     0.800000     1.000000     0.000000     2.000000
+75%      61.000000     1.000000     2.000000   140.000000   275.00000  ...     1.000000     1.800000     2.000000     1.000000     3.000000
+max      77.000000     1.000000     3.000000   200.000000   564.00000  ...     1.000000     6.200000     2.000000     4.000000     3.000000
+
+[8 rows x 13 columns]
+root@e8904edca287:/app#

@@ -1,0 +1,332 @@
+New Terminal Output:
+root@25bde5ee543b:/app# ls -ლა
+ls: invalid option -- ''
+Try 'ls --help' for more information.
+root@25bde5ee543b:/app# find /app -maxdepth 3 -type f -print
+/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+/app/.dockerignore
+/app/heart.csv
+/app/diabetes_data.csv
+/app/Dockerfile
+/app/requirements.txt
+root@25bde5ee543b:/app# ls -la /app/src /app/src/transform /app/src/cluster
+/app/src:
+total 16
+drwxrwxr-x 4 root root 4096 Jul 25 07:00 .
+drwxr-xr-x 1 root root 4096 Jul 30 04:12 ..
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 cluster
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 transform
+
+/app/src/cluster:
+total 36
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 .
+drwxrwxr-x 4 root root 4096 Jul 25 07:00 ..
+-rw-rw-r-- 1 root root  198 Jul 25 06:51 agglomerative.py
+-rw-rw-r-- 1 root root  130 Jul 25 06:51 birch.py
+-rw-rw-r-- 1 root root  186 Jul 25 06:51 bisecting_kmeans.py
+-rw-rw-r-- 1 root root  220 Jul 25 06:51 gaussian_mixture.py
+-rw-rw-r-- 1 root root  207 Jul 23 09:00 kmean.py
+-rw-rw-r-- 1 root root  211 Jul 25 06:51 minibatch_kmeans.py
+-rw-rw-r-- 1 root root  222 Jul 25 06:51 spectral.py
+
+/app/src/transform:
+total 56
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 .
+drwxrwxr-x 4 root root 4096 Jul 25 07:00 ..
+-rw-rw-r-- 1 root root  948 Jul 25 07:00 BinaryEncoder.py
+-rw-rw-r-- 1 root root  422 Jul 22 10:34 CountEncoder.py
+-rw-rw-r-- 1 root root  436 Jul 22 10:34 FrequencyEncoder.py
+-rw-rw-r-- 1 root root  546 Jul 25 06:51 HashEncoder.py
+-rw-rw-r-- 1 root root  599 Jul 22 10:12 KBinsDiscretizer.py
+-rw-rw-r-- 1 root root  494 Jul 22 10:35 MaxAbsScaler.py
+-rw-rw-r-- 1 root root  494 Jul 24 14:49 Normalizer.py
+-rw-rw-r-- 1 root root  856 Jul 25 06:51 OnehotEncoder.py
+-rw-rw-r-- 1 root root  698 Jul 23 15:04 OrdinalEncoder.py
+-rw-rw-r-- 1 root root  811 Jul 23 15:02 PolynomialFeatures.py
+-rw-rw-r-- 1 root root  488 Jul 23 15:04 RobustScaler.py
+-rw-rw-r-- 1 root root  472 Jul 23 15:04 StandardScaler.py
+root@25bde5ee543b:/app# sed -n '1,200p' /app/src/transform/__init__.py
+sed: can't read /app/src/transform/__init__.py: No such file or directory
+root@25bde5ee543b:/app# find /app/src/transform -type f -maxdepth 2 -print -exec sed -n '1,200p' {} \;
+find: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests spe
+cified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/src/transform/RobustScaler.py
+import pandas as pd
+from sklearn.preprocessing import RobustScaler
+
+
+def robust_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Scale features using statistics robust to outliers.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = RobustScaler()
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/HashEncoder.py
+import hashlib
+
+import pandas as pd
+
+
+def hash_encoder(df: pd.DataFrame, columns=None, n_features=8) -> pd.DataFrame:
+    """
+    Hash categorical columns into fixed-size integer features.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+
+        hashed = result[col].astype(str).apply(
+            lambda x: int(hashlib.md5(x.encode()).hexdigest(), 16)
+        )
+
+        result[col] = hashed % n_features
+
+    return result/app/src/transform/MaxAbsScaler.py
+import pandas as pd
+from sklearn.preprocessing import MaxAbsScaler
+
+
+def max_abs_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Scale numeric features by their maximum absolute value.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = MaxAbsScaler()
+
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/KBinsDiscretizer.py
+import pandas as pd
+from sklearn.preprocessing import KBinsDiscretizer
+
+
+def kbins_discretizer(df: pd.DataFrame,columns=None, n_bins=5, strategy="quantile") -> pd.DataFrame:
+    """
+    Discretize numeric columns into bins.
+    """
+    result = df.copy()
+
+    if c
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+rame(
+        encoded,
+        columns=encoder.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, encoded_df], axis=1)
+
+    return result/app/src/transform/Normalizer.py
+import pandas as pd
+from sklearn.preprocessing import Normalizer
+
+
+def normalizer(df: pd.DataFrame, columns=None, norm="l2") -> pd.DataFrame:
+    """
+    Normalize samples using L1, L2 or Max norm.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = Normalizer(norm=norm)
+
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/BinaryEncoder.py
+import pandas as pd
+
+
+def binary_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Binary encode categorical columns.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+
+        uniques = sorted(result[col].dropna().unique())
+        mapping = {v: i for i, v in enumerate(uniques)}
+
+        encoded = result[col].map(mapping).fillna(0).astype(int)
+
+        n_bits = max(1, len(mapping).bit_length())
+
+        binary = encoded.apply(
+            lambda x, n_bits=n_bits: list(map(int, format(x, f"0{n_bits}b")))
+        )
+
+        binary_df = pd.DataFrame(
+            binary.tolist(),
+            columns=[f"{col}_bin{i}" for i in range(n_bits)],
+            index=result.index
+        )
+
+        result.drop(columns=col, inplace=True)
+        result = pd.concat([result, binary_df], axis=1)
+
+    return result/app/src/transform/PolynomialFeatures.py
+import pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+
+
+def polynomial_features(df: pd.DataFrame, columns=None, degree=2, include_bias=False) -> pd.DataFrame:
+    """
+    Generate polynomial feature combinations.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    poly = PolynomialFeatures(
+        degree=degree,
+        include_bias=include_bias
+    )
+
+    transformed = poly.fit_transform(result[columns])
+
+    poly_df = pd.DataFrame(
+        transformed,
+        columns=poly.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, poly_df], axis=1)
+
+    return resultroot@25bde5ee543b:/app# find /app/src/cluster -type f -maxdepth 2 -print -exec sed -n '1,240p' {} \;
+find: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests spe
+cified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/src/cluster/agglomerative.py
+from sklearn.cluster import AgglomerativeClustering
+
+
+def agglomerative(X, k):
+    model = AgglomerativeClustering(
+        n_clusters=k,
+        linkage="ward"
+    )
+    return model.fit_predict(X)/app/src/cluster/minibatch_kmeans.py
+from sklearn.cluster import MiniBatchKMeans
+
+
+def minibatch_kmeans(X, k):
+    model = MiniBatchKMeans(
+        n_clusters=k,
+        random_state=42,
+        batch_size=1024
+    )
+    return model.fit_predict(X)/app/src/cluster/birch.py
+from sklearn.cluster import Birch
+
+
+def birch(X, k):
+    model = Birch(
+        n_clusters=k
+    )
+    return model.fit_predict(X)/app/src/cluster/gaussian_mixture.py
+from sklearn.mixture import GaussianMixture
+
+
+def gaussian_mixture(X, k):
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="full",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/kmean.py
+from sklearn.cluster import KMeans
+
+
+def kmeans(X, k):
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init="auto",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/spectral.py
+from sklearn.cluster import SpectralClustering
+
+
+def spectral(X, k):
+    model = SpectralClustering(
+        n_clusters=k,
+        affinity="nearest_neighbors",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/bisecting_kmeans.py
+from sklearn.cluster import BisectingKMeans
+
+
+def bisecting_kmeans(X, k):
+    model = BisectingKMeans(
+        n_clusters=k,
+        random_state=42
+    )
+    return model.fit_predict(X)root@25bde5ee543b:/app# python3 - <<'PY'
+> import pandas as pd
+> for path in ['/app/diabetes_data.csv','/app/heart.csv']:
+>     df=pd.read_csv(path)
+>     print('\n===',path,'===')
+>     print('shape',df.shape)
+>     print('cols',list(df.columns))
+>     print(df.head(3))
+>     print('dtypes\n',df.dtypes)
+>     print('missing per col (top)')
+>     miss=df.isna().sum().sort_values(ascending=False)
+>     print(miss[miss>0].head(20))
+> PY
+

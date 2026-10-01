@@ -1,0 +1,237 @@
+New Terminal Output:
+
+ /app/diabetes_data.csv (520, 16)
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+3   45   Male         0           0                   1         1  ...             0                1                0                 0         0        0
+4   60   Male         1           1                   1         1  ...             1                1                1                 1         1        1
+
+[5 rows x 16 columns]
+age                   0
+gender                0
+polyuria              0
+polydipsia            0
+sudden_weight_loss    0
+weakness              0
+polyphagia            0
+genital_thrush        0
+visual_blurring       0
+itching               0
+dtype: int64
+
+ /app/heart.csv (1025, 13)
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+3   61    1   0       148   203    0        1      161      0      0.0      2   1     3
+4   62    0   0       138   294    1        1      106      0      1.9      1   3     2
+age         0
+sex         0
+cp          0
+trestbps    0
+chol        0
+fbs         0
+restecg     0
+thalach     0
+exang       0
+oldpeak     0
+dtype: int64
+root@28ff7fec204a:/app# python3 - <<'PY'
+> import pandas as pd
+>
+> def inspect(path, nuniq=10):
+>     df = pd.read_csv(path)
+>     print('\n===', path, '===')
+>     print('shape:', df.shape)
+>     print('columns:', df.columns.tolist())
+>     print('dtypes:\n', df.dtypes)
+>     na = df.isna().sum()
+>     print('na_count_total:', int(na.sum()))
+>     print('na_by_col (nonzero):\n', na[na>0].sort_values(ascending=False))
+>     obj_cols = df.select_dtypes(include=['object','category']).columns.tolist()
+>     num_cols = df.select_dtypes(include=['number']).columns.tolist()
+>     print('num_cols:', num_cols)
+>     print('cat_cols:', obj_cols)
+>     for c in obj_cols[:6]:
+>         vc = df[c].astype(str).value_counts().head(nuniq)
+>         print(f'\n{c} top values:\n{vc}')
+>
+> inspect('/app/diabetes_data.csv')
+> inspect('/app/heart.csv')
+> PY
+
+=== /app/diabetes_data.csv ===
+shape: (520, 16)
+columns: ['age', 'gender', 'polyuria', 'polydipsia', 'sudden_weight_loss', 'weakness', 'polyphagia', 'genital_thrush', 'visual_blurring', 'itching', 'irritabili
+ty', 'delayed_healing', 'partial_paresis', 'muscle_stiffness', 'alopecia', 'obesity']
+dtypes:
+ age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+na_count_total: 0
+na_by_col (nonzero):
+ Series([], dtype: int64)
+<stdin>:12: Pandas4Warning: For backward compatibility, 'str' dtypes are included by select_dtypes when 'object' dtype is specified. This behavior is deprecated
+ and will be removed in a future version. Explicitly pass 'str' to `include` to select them, or to `exclude` to remove them and silence this warning.
+See https://pandas.pydata.org/docs/user_guide/migration-3-strings.html#string-migration-select-dtypes for details on how to write code that works with pandas 2
+and 3.
+num_cols: ['age', 'polyuria', 'polydipsia', 'sudden_weight_loss', 'weakness', 'polyphagia', 'genital_thrush', 'visual_blurring', 'itching', 'irritability', 'del
+ayed_healing', 'partial_paresis', 'muscle_stiffness', 'alopecia', 'obesity']
+cat_cols: ['gender']
+
+gender top values:
+gender
+Male      328
+Female    192
+Name: count, dtype: int64
+
+=== /app/heart.csv ===
+shape: (1025, 13)
+columns: ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+dtypes:
+ age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+na_count_total: 0
+na_by_col (nonzero):
+ Series([], dtype: int64)
+num_cols: ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+cat_cols: []
+root@28ff7fec204a:/app# cat > /app/run_cluster.py <<'PY'
+> import numpy as np
+> import pandas as pd
+>
+> from sklearn.compose import ColumnTransformer
+> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+> from sklearn.impute import SimpleImputer
+> from sklearn.pipeline import Pipeline
+> from sklearn.metrics import silhouette_score
+>
+> from sklearn.cluster import KMeans, AgglomerativeClustering, MiniBatchKMeans, Birch
+> from sklearn.mixture import GaussianMixture
+>
+> RANDOM_STATE = 42
+>
+>
+> def build_preprocessor(df: pd.DataFrame):
+>     cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+>     num_cols = df.select_dtypes(include=["number"]).columns.tolist()
+>
+>     numeric_pipe = Pipeline([
+>         ("imputer", SimpleImputer(strategy="median")),
+>         ("scaler", StandardScaler()),
+>     ])
+>
+>     cat_pipe = Pipeline([
+>         ("imputer", SimpleImputer(strategy="most_frequent")),
+>         ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+>     ])
+>
+>     pre = ColumnTransformer([
+>         ("num", numeric_pipe, num_cols),
+>         ("cat", cat_pipe, cat_cols),
+>     ], remainder="drop")
+>
+>     return pre, num_cols, cat_cols
+>
+>
+> def cluster_and_select(X: np.ndarray, k: int = 2):
+>     # Candidate models; all produce labels.
+>     candidates = {
+>         "kmeans": lambda: KMeans(n_clusters=k, n_init="auto", random_state=RANDOM_STATE),
+>         "minibatch": lambda: MiniBatchKMeans(n_clusters=k, random_state=RANDOM_STATE, batch_size=256),
+>         "gmm": lambda: GaussianMixture(n_components=k, covariance_type="full", random_state=RANDOM_STATE),
+>         "agglo": lambda: AgglomerativeClustering(n_clusters=k, linkage="ward"),
+>         "birch": lambda: Birch(n_clusters=k),
+>     }
+>
+>     best = (None, -1e9, None)  # (name, score, labels)
+>     for name, make in candidates.items():
+>         model = make()
+>         try:
+>             if name == "gmm":
+>                 labels = model.fit_predict(X)
+>             else:
+>                 labels = model.fit_predict(X)
+>
+>             # Silhouette requires >1 label present
+>             if len(set(labels)) < 2:
+>                 continue
+>             score = silhouette_score(X, labels, metric="euclidean")
+>             if score > best[1]:
+>                 best = (name, score, labels)
+>         except Exception:
+>             continue
+>
+>     if best[0] is None:
+>         # Fallback to kmeans
+>         labels = KMeans(n_clusters=k, n_init="auto", random_state=RANDOM_STATE).fit_predict(X)
+>         return "kmeans_fallback", float("nan"), labels
+>
+>     return best
+>
+>
+> def run(in_path: str, out_path: str):
+>     df = pd.read_csv(in_path)
+>
+>     pre, num_cols, cat_cols = build_preprocessor(df)
+>     X = pre.fit_transform(df)
+>
+>     name, score, labels = cluster_and_select(X, k=2)
+>
+>     # Ensure labels are 0/1
+>     labels = pd.Series(labels).astype(int)
+>     uniq = sorted(labels.unique().tolist())
+>     if uniq != [0, 1]:
+>         mapping = {uniq[i]: i for i in range(len(uniq))}
+>         labels = labels.map(mapping).astype(int)
+>
+>     out = pd.DataFrame({"pseudo_label": labels.values})
+>     out.to_csv(out_path, index=False)
+>
+>     print(f"{in_path} -> {out_path} | model={name} silhouette={score} | X_shape={X.shape} | labels={sorted(out['pseudo_label'].unique())}")
+>
+>
+> if __name__ == "__main__":
+>     run("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+>     run("/app/heart.csv", "/app/output_heart.csv")
+> PY
+root@28ff7fec204a:/app# python3 /app/run_cluster.py
+python3 - <<'PY'
+import pandas as pd
+for p in ['/app/output_diabetes_data.csv','/app/output_heart.csv']:
+    df=pd.read_csv(p)
+    print('\n',p,df.shape)
+    print('cols:',df.columns.tolist())
+    print('unique:',sorted(df['pseudo_label'].unique().tolist()))
+    print(df.head())
+PY
+

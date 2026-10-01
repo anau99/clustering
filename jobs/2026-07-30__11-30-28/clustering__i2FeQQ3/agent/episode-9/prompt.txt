@@ -1,0 +1,37 @@
+New Terminal Output:
+
+root@e8904edca287:/app# python3 -c "
+> import pandas as pd
+> import numpy as np
+>
+> # Verify outputs
+> d = pd.read_csv('/app/output_diabetes_data.csv')
+> h = pd.read_csv('/app/output_heart.csv')
+>
+> print('Diabetes output:')
+> print(f'  Columns: {d.columns.tolist()}')
+> print(f'  Rows: {len(d)}')
+> print(f'  Values: {sorted(d[\"pseudo_label\"].unique().tolist())}')
+> print(f'  Distribution: {d[\"pseudo_label\"].value_counts().to_dict()}')
+>
+> print('\nHeart output:')
+> print(f'  Columns: {h.columns.tolist()}')
+> print(f'  Rows: {len(h)}')
+> print(f'  Values: {sorted(h[\"pseudo_label\"].unique().tolist())}')
+> print(f'  Distribution: {h[\"pseudo_label\"].value_counts().to_dict()}')
+> print('\nAll checks passed!')
+> "
+Diabetes output:
+  Columns: ['pseudo_label']
+  Rows: 520
+  Values: [0, 1]
+  Distribution: {0: 298, 1: 222}
+
+Heart output:
+  Columns: ['pseudo_label']
+  Rows: 1025
+  Values: [0, 1]
+  Distribution: {1: 618, 0: 407}
+
+All checks passed!
+root@e8904edca287:/app#

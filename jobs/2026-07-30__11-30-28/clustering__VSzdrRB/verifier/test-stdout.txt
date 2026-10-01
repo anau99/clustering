@@ -1,0 +1,57 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.12, pytest-9.1.1, pluggy-1.6.0
+rootdir: /tests
+plugins: json-ctrf-0.5.2
+collected 6 items
+
+../tests/test_outputs.py F.....                                          [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_clustering_metrics ____________________________
+
+    def test_clustering_metrics():
+        """
+        Compare predicted cluster labels against true labels using
+        ARI and NMI for both datasets.
+        """
+    
+        for cfg in DATASETS:
+    
+            y_true = cfg["true_labels"]
+            pred_df = pd.read_csv(cfg["pred_file"])
+            y_pred = pred_df[cfg["pred_label_col"]].values
+    
+            assert len(y_true) == len(y_pred), (
+                f"{cfg['name']}: row count mismatch "
+                f"(true={len(y_true)}, pred={len(y_pred)})"
+            )
+    
+            ari = adjusted_rand_score(y_true, y_pred)
+            nmi = normalized_mutual_info_score(y_true, y_pred)
+    
+            print(
+                f"{cfg['name']} -> "
+                f"ARI={ari:.4f} | "
+                f"NMI={nmi:.4f}"
+            )
+    
+>           assert ari >= cfg["ari_threshold"], (
+                f"{cfg['name']}: "
+                f"ARI={ari:.4f} < {cfg['ari_threshold']}"
+            )
+E           AssertionError: heart: ARI=0.2325 < 0.35
+E           assert 0.23247039978320555 >= 0.35
+
+/tests/test_outputs.py:79: AssertionError
+----------------------------- Captured stdout call -----------------------------
+diabetes_data -> ARI=0.5440 | NMI=0.4379
+heart -> ARI=0.2325 | NMI=0.1754
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ../tests/test_outputs.py::test_row_count_matches_input
+PASSED ../tests/test_outputs.py::test_both_clusters_present
+PASSED ../tests/test_outputs.py::test_output_single_column
+PASSED ../tests/test_outputs.py::test_output_file_name
+PASSED ../tests/test_outputs.py::test_output_column_name
+FAILED ../tests/test_outputs.py::test_clustering_metrics - AssertionError: he...
+========================= 1 failed, 5 passed in 8.34s ==========================

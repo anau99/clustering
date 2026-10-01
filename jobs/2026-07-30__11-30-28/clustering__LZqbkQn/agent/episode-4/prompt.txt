@@ -1,0 +1,239 @@
+New Terminal Output:
+
+root@e123fae6e01b:/app# cat > /app/solve.py << 'EOF'
+> import pandas as pd
+(f> import numpy as np
+> import sys
+> sys.path.insert(0, '/app/src')
+>
+> from cluster.kmean import kmeans
+> from cluster.gaussian_mixture import gaussian_mixture
+> from cluster.agglomerative import agglomerative
+> from cluster.spectral import spectral
+> from cluster.birch import *
+> from cluster.bisecting_kmeans import *
+> from transform.StandardScaler import standard_scaler
+> from transform.OnehotEncoder import one_hot_encoder
+> from transform.RobustScaler import *
+> from transform.Normalizer import *
+>
+> # ============ DIABETES DATASET ============
+> print("="*50)
+> print("DIABETES DATASET")
+> print("="*50)
+>
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> print(f"Shape: {df_diabetes.shape}")
+> print(f"Columns: {df_diabetes.columns.tolist()}")
+ic> print(f"Dtypes:\n{df_diabetes.dtypes}")
+> print(f"\nFirst few rows:\n{df_diabetes.head()}")
+> print(f"\nGender values: {df_diabetes['gender'].unique()}")
+>
+> # Preprocess diabetes: encode gender as binary, scale age
+> df_d = df_diabetes.copy()
+> df_d['gender'] = (df_d['gender'] == 'Male').astype(int)
+>
+> # Try multiple approaches
+> # Approach 1: Standard scale all, then KMeans
+> df_d_scaled = standard_scaler(df_d)
+> print(f"\nScaled diabetes shape: {df_d_scaled.shape}")
+>
+> labels_d_kmeans = kmeans(df_d_scaled.values, 2)
+> labels_d_gmm = gaussian_mixture(df_d_scaled.values, 2)
+> labels_d_agg = agglomerative(df_d_scaled.values, 2)
+>
+> # Approach 2: One-hot encode gender, scale age
+> df_d2 = df_diabetes.copy()
+> df_d2_enc = one_hot_encoder(df_d2, columns=['gender'])
+> df_d2_enc = standard_scaler(df_d2_enc)
+> labels_d_kmeans2 = kmeans(df_d2_enc.values, 2)
+> labels_d_gmm2 = gaussian_mixture(df_d2_enc.values, 2)
+>
+> # Approach 3: No scaling, just encode gender
+> df_d3 = df_diabetes.copy()
+> df_d3['gender'] = (df_d3['gender'] == 'Male').astype(int)
+> labels_d_kmeans3 = kmeans(df_d3.values, 2)
+> labels_d_gmm3 = gaussian_mixture(df_d3.values, 2)
+> labels_d_agg3 = agglomerative(df_d3.values, 2)
+>
+> print("\nDiabetes cluster distributions:")
+> print(f"KMeans (scaled): {np.bincount(labels_d_kmeans)}")
+> print(f"GMM (scaled): {np.bincount(labels_d_gmm)}")
+> print(f"Agg (scaled): {np.bincount(labels_d_agg)}")
+> print(f"KMeans2 (onehot+scaled): {np.bincount(labels_d_kmeans2)}")
+> print(f"GMM2 (onehot+scaled): {np.bincount(labels_d_gmm2)}")
+> print(f"KMeans3 (no scale): {np.bincount(labels_d_kmeans3)}")
+> print(f"GMM3 (no scale): {np.bincount(labels_d_gmm3)}")
+> print(f"Agg3 (no scale): {np.bincount(labels_d_agg3)}")
+>
+> # Use GMM on scaled data as primary choice for diabetes
+> # (GMM handles mixed data well)
+> best_diabetes = labels_d_gmm
+>
+> # ============ HEART DATASET ============
+> print("\n" + "="*50)
+> print("HEART DATASET")
+> print("="*50)
+>
+> df_heart = pd.read_csv('/app/heart.csv')
+> print(f"Shape: {df_heart.shape}")
+> print(f"Columns: {df_heart.columns.tolist()}")
+> print(f"Dtypes:\n{df_heart.dtypes}")
+> print(f"\nFirst few rows:\n{df_heart.head()}")
+>
+> # Heart: numerical features: trestbps, chol, thalach, oldpeak
+> # Categorical: sex, cp, fbs, restecg, exang, slope, ca, thal
+> # Note: 'age' is in the dataset but not listed as numerical feature to use
+>
+> cat_cols_heart = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+> num_cols_heart = ['trestbps', 'chol', 'thalach', 'oldpeak']
+>
+> # Approach 1: One-hot encode categorical, standard scale numerical
+> df_h = df_heart.copy()
+> df_h_enc = one_hot_encoder(df_h, columns=cat_cols_heart)
+> df_h_enc = standard_scaler(df_h_enc)
+>
+> labels_h_kmeans = kmeans(df_h_enc.values, 2)
+> labels_h_gmm = gaussian_mixture(df_h_enc.values, 2)
+> labels_h_agg = agglomerative(df_h_enc.values, 2)
+>
+> # Approach 2: Scale all (treat categorical as ordinal)
+> df_h2 = df_heart.copy()
+> df_h2_scaled = standard_scaler(df_h2)
+> labels_h_kmeans2 = kmeans(df_h2_scaled.values, 2)
+> labels_h_gmm2 = gaussian_mixture(df_h2_scaled.values, 2)
+> labels_h_agg2 = agglomerative(df_h2_scaled.values, 2)
+>
+> # Approach 3: One-hot encode, standard scale, then spectral
+> try:
+>     labels_h_spectral = spectral(df_h_enc.values, 2)
+>     print(f"Spectral (onehot+scaled): {np.bincount(labels_h_spectral)}")
+> except Exception as e:
+>     print(f"Spectral failed: {e}")
+>     labels_h_spectral = labels_h_kmeans
+>
+> print("\nHeart cluster distributions:")
+> print(f"KMeans (onehot+scaled): {np.bincount(labels_h_kmeans)}")
+> print(f"GMM (onehot+scaled): {np.bincount(labels_h_gmm)}")
+> print(f"Agg (onehot+scaled): {np.bincount(labels_h_agg)}")
+> print(f"KMeans2 (all scaled): {np.bincount(labels_h_kmeans2)}")
+> print(f"GMM2 (all scaled): {np.bincount(labels_h_gmm2)}")
+> print(f"Agg2 (all scaled): {np.bincount(labels_h_agg2)}")
+>
+> best_heart = labels_h_gmm
+>
+> # ============ SAVE RESULTS ============
+> # Save diabetes output
+> out_diabetes = pd.DataFrame({'pseudo_label': best_diabetes})
+> out_diabetes.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"\nSaved diabetes output: {out_diabetes.shape}")
+> print(f"Diabetes label distribution: {out_diabetes['pseudo_label'].value_counts().to_dict()}")
+>
+> # Save heart output
+> out_heart = pd.DataFrame({'pseudo_label': best_heart})
+> out_heart.to_csv('/app/output_heart.csv', index=False)
+> print(f"Saved heart output: {out_heart.shape}")
+> print(f"Heart label distribution: {out_heart['pseudo_label'].value_counts().to_dict()}")
+>
+> print("\nDone!")
+> EOF
+root@e123fae6e01b:/app# cd /app && python solve.py
+==================================================
+DIABETES DATASET
+==================================================
+Shape: (520, 16)
+Columns: ['age', 'gender', 'polyuria', 'polydipsia', 'sudden_weight_loss', 'weakness', 'polyphagia', 'genital_thrush', 'visual_blurring', 'itching', 'irritabili
+ty', 'delayed_healing', 'partial_paresis', 'muscle_stiffness', 'alopecia', 'obesity']
+Dtypes:
+age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+
+First few rows:
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+3   45   Male         0           0                   1         1  ...             0                1                0                 0         0        0
+4   60   Male         1           1                   1         1  ...             1                1                1                 1         1        1
+
+[5 rows x 16 columns]
+
+Gender values: <StringArray>
+['Male', 'Female']
+Length: 2, dtype: str
+
+Scaled diabetes shape: (520, 16)
+
+Diabetes cluster distributions:
+KMeans (scaled): [255 265]
+GMM (scaled): [233 287]
+Agg (scaled): [374 146]
+KMeans2 (onehot+scaled): [261 259]
+GMM2 (onehot+scaled): [279 241]
+KMeans3 (no scale): [313 207]
+GMM3 (no scale): [365 155]
+Agg3 (no scale): [317 203]
+
+==================================================
+HEART DATASET
+==================================================
+Shape: (1025, 13)
+Columns: ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+Dtypes:
+age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+
+First few rows:
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+3   61    1   0       148   203    0        1      161      0      0.0      2   1     3
+4   62    0   0       138   294    1        1      106      0      1.9      1   3     2
+/usr/local/lib/python3.13/site-packages/sklearn/manifold/_spectral_embedding.py:329: UserWarning: Graph is not fully connected, spectral embedding may not work
+as expected.
+  warnings.warn(
+Spectral (onehot+scaled): [1014   11]
+
+Heart cluster distributions:
+KMeans (onehot+scaled): [481 544]
+GMM (onehot+scaled): [144 881]
+Agg (onehot+scaled): [645 380]
+KMeans2 (all scaled): [383 642]
+GMM2 (all scaled): [497 528]
+Agg2 (all scaled): [476 549]
+
+Saved diabetes output: (520, 1)
+Diabetes label distribution: {1: 287, 0: 233}
+Saved heart output: (1025, 1)
+Heart label distribution: {1: 881, 0: 144}
+
+Done!
+root@e123fae6e01b:/app#

@@ -1,0 +1,296 @@
+New Terminal Output:
+root@613d962e1432:/app# ls -ლა
+ls: invalid option -- ''
+Try 'ls --help' for more information.
+root@613d962e1432:/app# find /app -maxdepth 3 -type f -print
+/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+/app/.dockerignore
+/app/heart.csv
+/app/diabetes_data.csv
+/app/Dockerfile
+/app/requirements.txt
+root@613d962e1432:/app# ls -la /app/src
+total 16
+drwxrwxr-x 4 root root 4096 Jul 25 07:00 .
+drwxr-xr-x 1 root root 4096 Jul 30 04:12 ..
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 cluster
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 transform
+root@613d962e1432:/app# find /app/src -maxdepth 3 -type f -print
+/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+root@613d962e1432:/app# python3 -c "import pandas as pd; print('diabetes', pd.read_csv('/app/diabetes_data.csv').shape); print(pd.read_csv('/app/diabetes_data.c
+sv').head()); print('heart', pd.read_csv('/app/heart.csv').shape); print(pd.read_csv('/app/heart.csv').head())"
+diabetes (520, 16)
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+3   45   Male         0           0                   1         1  ...             0                1                0                 0         0        0
+4   60   Male         1           1                   1         1  ...             1                1                1                 1         1        1
+
+[5 rows x 16 columns]
+heart (1025, 13)
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+3   61    1   0       148   203    0        1      161      0      0.0      2   1     3
+4   62    0   0       138   294    1        1      106      0      1.9      1   3     2
+python3 -c "import pandas as pd; d=pd.read_csv('/app/diabetes_data.csv'); h=pd.read_csv('/app/heart.csv'); print('diabetes dtypes:\n', d.dtypes); print('\nmissi
+ng diabetes:', d.isna().sum().sum()); print('\nheart dtypes:\n', h.dtypes); print('\nmissing heart:', h.isna().sum().sum())"
+root@613d962e1432:/app# python3 -c "import pandas as pd; d=pd.read_csv('/app/diabetes_data.csv'); h=pd.read_csv('/app/heart.csv'); print('diabetes dtypes:\n', d
+.dtypes); print('\nmissing diabetes:', d.isna().sum().sum()); print('\nheart dtypes:\n', h.dtypes); print('\nmissing heart:', h.isna().sum().sum())"
+diabetes dtypes:
+ age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+
+missing diabetes: 0
+
+heart dtypes:
+ age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak  
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+(
+            include=["object", "category"]
+        ).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OneHotEncoder(
+        sparse_output=False,
+        handle_unknown="ignore"
+    )
+
+    encoded = encoder.fit_transform(result[columns])
+
+    encoded_df = pd.DataFrame(
+        encoded,
+        columns=encoder.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, encoded_df], axis=1)
+
+    return result/app/src/transform/Normalizer.py
+import pandas as pd
+from sklearn.preprocessing import Normalizer
+
+
+def normalizer(df: pd.DataFrame, columns=None, norm="l2") -> pd.DataFrame:
+    """
+    Normalize samples using L1, L2 or Max norm.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = Normalizer(norm=norm)
+
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/BinaryEncoder.py
+import pandas as pd
+
+
+def binary_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Binary encode categorical columns.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+
+        uniques = sorted(result[col].dropna().unique())
+        mapping = {v: i for i, v in enumerate(uniques)}
+
+        encoded = result[col].map(mapping).fillna(0).astype(int)
+
+        n_bits = max(1, len(mapping).bit_length())
+
+        binary = encoded.apply(
+            lambda x, n_bits=n_bits: list(map(int, format(x, f"0{n_bits}b")))
+        )
+
+        binary_df = pd.DataFrame(
+            binary.tolist(),
+            columns=[f"{col}_bin{i}" for i in range(n_bits)],
+            index=result.index
+        )
+
+        result.drop(columns=col, inplace=True)
+        result = pd.concat([result, binary_df], axis=1)
+
+    return result/app/src/transform/PolynomialFeatures.py
+import pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+
+
+def polynomial_features(df: pd.DataFrame, columns=None, degree=2, include_bias=False) -> pd.DataFrame:
+    """
+    Generate polynomial feature combinations.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    poly = PolynomialFeatures(
+        degree=degree,
+        include_bias=include_bias
+    )
+
+    transformed = poly.fit_transform(result[columns])
+
+    poly_df = pd.DataFrame(
+        transformed,
+        columns=poly.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, poly_df], axis=1)
+
+    return resultroot@613d962e1432:/app# find /app/src/cluster -type f -maxdepth 2 -print -exec sed -n '1,240p' {} \;
+find: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests spe
+cified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/src/cluster/agglomerative.py
+from sklearn.cluster import AgglomerativeClustering
+
+
+def agglomerative(X, k):
+    model = AgglomerativeClustering(
+        n_clusters=k,
+        linkage="ward"
+    )
+    return model.fit_predict(X)/app/src/cluster/minibatch_kmeans.py
+from sklearn.cluster import MiniBatchKMeans
+
+
+def minibatch_kmeans(X, k):
+    model = MiniBatchKMeans(
+        n_clusters=k,
+        random_state=42,
+        batch_size=1024
+    )
+    return model.fit_predict(X)/app/src/cluster/birch.py
+from sklearn.cluster import Birch
+
+
+def birch(X, k):
+    model = Birch(
+        n_clusters=k
+    )
+    return model.fit_predict(X)/app/src/cluster/gaussian_mixture.py
+from sklearn.mixture import GaussianMixture
+
+
+def gaussian_mixture(X, k):
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="full",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/kmean.py
+from sklearn.cluster import KMeans
+
+
+def kmeans(X, k):
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init="auto",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/spectral.py
+from sklearn.cluster import SpectralClustering
+
+
+def spectral(X, k):
+    model = SpectralClustering(
+        n_clusters=k,
+        affinity="nearest_neighbors",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/bisecting_kmeans.py
+from sklearn.cluster import BisectingKMeans
+
+
+def bisecting_kmeans(X, k):
+    model = BisectingKMeans(
+        n_clusters=k,
+        random_state=42
+    )
+    return model.fit_predict(X)root@613d962e1432:/app# find /app -maxdepth 2 -type f \( -name '*.py' -o -name '*.ipynb' -o -name 'README*' \) -print
+root@613d962e1432:/app#

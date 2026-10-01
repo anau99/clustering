@@ -1,0 +1,277 @@
+New Terminal Output:
+
+root@e8904edca287:/app# cat > /app/solve_final.py << 'EOF'
+sh': 1.5,
+    'visual_blurring': 1.0, 'itching': 0.5, 'delayed_healing': 0.5,
+    'muscle_stiffness': 0.5, 'alopecia': 0.5, 'obesity': 0.5, 'age': 0.5
+}
+for col, w in importance_d.items():
+    if col in X_d_weighted.columns:
+        X_d_weighted[col] = X_d_weighted[col] * w
+
+X_d_w = X_d_weighted.values
+
+# Multiple methods
+results_d = {}
+
+# GMM on score
+results_d['gmm_score'] = labels_d_score
+
+# KMeans on weighted features
+km_d = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+results_d['kmeans_w'] = km_d.fit_predict(X_d_w)
+
+# GMM on weighted features
+gmm_dw = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+results_d['gmm_w'] = gmm_dw.fit_predict(X_d_w)
+
+# Agglomerative on weighted features
+agg_d = AgglomerativeClustering(n_clusters=2, linkage='ward')
+results_d['agg_w'] = agg_d.fit_predict(X_d_w)
+
+# Rule-based (polyuria OR polydipsia)
+results_d['rule_or'] = ((df_diabetes['polyuria'] == 1) | (df_diabetes['polydipsia'] == 1)).astype(int).values
+
+# Consens> import pandas as pd
+> import numpy as np
+> from sklearn.preprocessing import StandardScaler
+> from sklearn.cluster import KMeans, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+> from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
+>
+> # ===== DIABETES DATASET =====
+> print("="*50)
+> print("DIABETES DATASET")
+> print("="*50)
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+>
+> # Encode gender
+> df_diabetes['gender_num'] = (df_diabetes['gender'] == 'Male').astype(int)
+>
+> # Create composite risk score based on domain knowledge
+> # In the Early Stage Diabetes dataset, polyuria and polydipsia are nearly perfect predictors
+> score = (
+>     df_diabetes['polyuria'] * 4.0 +
+>     df_diabetes['polydipsia'] * 4.0 +
+>     df_diabetes['sudden_weight_loss'] * 2.0 +
+>     df_diabetes['polyphagia'] * 1.5 +
+>     df_diabetes['irritability'] * 2.0 +
+>     df_diabetes['partial_paresis'] * 2.0 +
+>     df_diabetes['gender_num'] * 1.5 +
+>     df_diabetes['weakness'] * 0.5 +
+>     df_diabetes['genital_thrush'] * 1.0 +
+>     df_diabetes['visual_blurring'] * 0.5 +
+>     df_diabetes['itching'] * (-0.5) +  # itching is actually negatively correlated in some studies
+>     df_diabetes['delayed_healing'] * (-0.5) +  # might be negatively correlated
+>     df_diabetes['alopecia'] * (-0.5) +
+>     df_diabetes['obesity'] * 0.5
+> )
+>
+=> # Use GMM on the score to find natural threshold
+> score_vals = score.values.reshape(-1, 1)
+> gmm_d = GaussianMixture(n_components=2, random_state=42)
+> labels_d_score = gmm_d.fit_predict(score_vals)
+, 'cp>
+> # Also try: prepare full feature set with proper weights
+> df_features = df_diabetes.drop(columns=['gender']).copy()
+> scaler_d = StandardScaler()
+> df_features['age'] = scaler_d.fit_transform(df_features[['age']])
+>
+> # Weight features by importance for diabetes prediction
+> X_d_weighted = df_features.copy()
+> importance_d = {
+>     'polyuria': 4.0, 'polydipsia': 4.0, 'sudden_weight_loss': 2.5,
+>     'polyphagia': 2.0, 'irritability': 2.0, 'partial_paresis': 2.0,
+>     'gender_num': 2.0, 'weakness': 1.0, 'genital_thrush': 1.5,
+>     'visual_blurring': 1.0, 'itching': 0.5, 'delayed_healing': 0.5,
+>     'muscle_stiffness': 0.5, 'alopecia': 0.5, 'obesity': 0.5, 'age': 0.5
+> }
+> for col, w in importance_d.items():
+>     if col in X_d_weighted.columns:
+>         X_d_weighted[col] = X_d_weighted[col] * w
+>
+> X_d_w = X_d_weighted.values
+>
+> # Multiple methods
+> results_d = {}
+>
+> # GMM on score
+_h[col] - df_> results_d['gmm_score'] = labels_d_score
+>
+> # KMeans on weighted features
+> km_d = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_d['kmeans_w'] = km_d.fit_predict(X_d_w)
+>
+> # GMM on weighted features
+> gmm_dw = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_d['gmm_w'] = gmm_dw.fit_predict(X_d_w)
+>
+> # Agglomerative on weighted features
+> agg_d = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_d['agg_w'] = agg_d.fit_predict(X_d_w)
+>
+> # Rule-based (polyuria OR polydipsia)
+> results_d['rule_or'] = ((df_diabetes['polyuria'] == 1) | (df_diabetes['polydipsia'] == 1)).astype(int).values
+>
+> # Consensus approach: majority vote
+> all_labels_d = np.array([results_d[k] for k in results_d.keys()])
+>
+> # Check agreement between methods
+> print("\nAgreement between diabetes methods (ARI):")
+> keys = list(results_d.keys())
+> for i in range(len(keys)):
+>     for j in range(i+1, len(keys)):
+>         ari = adjusted_rand_score(results_d[keys[i]], results_d[keys[j]])
+>         if ari > 0.5:
+>             print(f"  {keys[i]} vs {keys[j]}: ARI={ari:.4f}")
+>
+> print("\nDiabetes cluster sizes:")
+> for name, labels in results_d.items():
+>     unique, counts = np.unique(labels, return_counts=True)
+>     print(f"  {name}: {dict(zip(unique, counts))}")
+>
+> # Choose: use the GMM on weighted features 
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+
+> risk_vals = risk_score.values.reshape(-1, 1)
+> gmm_risk = GaussianMixture(n_components=2, random_state=42)
+> results_h['gmm_risk'] = gmm_risk.fit_predict(risk_vals)
+>
+> # KMeans on risk score
+> km_risk = KMeans(n_clusters=2, n_init=50, random_state=42)
+> results_h['kmeans_risk'] = km_risk.fit_predict(risk_vals)
+>
+> # All features standardized with weights
+> scaler_h = StandardScaler()
+> X_h_all = scaler_h.fit_transform(df_heart.values)
+> X_h_df = pd.DataFrame(X_h_all, columns=df_heart.columns)
+>
+> # Weight by importance
+> weights_h = {
+>     'cp': 2.5, 'thalach': 2.0, 'oldpeak': 2.5, 'ca': 3.0, 'thal': 2.5,
+>     'exang': 2.5, 'slope': 2.0, 'sex': 1.0, 'age': 1.0,
+>     'trestbps': 0.8, 'chol': 0.5, 'fbs': 0.5, 'restecg': 1.0
+> }
+> X_h_weighted = X_h_df.copy()
+> for col, w in weights_h.items():
+>     X_h_weighted[col] = X_h_weighted[col] * w
+> X_h_w = X_h_weighted.values
+>
+> # KMeans weighted
+> km_hw = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['kmeans_w'] = km_hw.fit_predict(X_h_w)
+>
+> # GMM weighted
+> gmm_hw = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_h['gmm_w'] = gmm_hw.fit_predict(X_h_w)
+>
+> # Agglomerative weighted
+> agg_hw = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_w'] = agg_hw.fit_predict(X_h_w)
+>
+> # Key features only
+> key_features_h = ['cp', 'thalach', 'oldpeak', 'exang', 'ca', 'thal', 'slope']
+> X_h_key = StandardScaler().fit_transform(df_heart[key_features_h])
+>
+> km_key = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42)
+> results_h['kmeans_key'] = km_key.fit_predict(X_h_key)
+>
+> gmm_key = GaussianMixture(n_components=2, covariance_type='full', random_state=42, n_init=20)
+> results_h['gmm_key'] = gmm_key.fit_predict(X_h_key)
+>
+> agg_key = AgglomerativeClustering(n_clusters=2, linkage='ward')
+> results_h['agg_key'] = agg_key.fit_predict(X_h_key)
+>
+> # Check agreement
+> print("\nHeart cluster sizes:")
+> for name, labels in results_h.items():
+>     unique, counts = np.unique(labels, return_counts=True)
+>     print(f"  {name}: {dict(zip(unique, counts))}")
+>
+> print("\nAgreement between heart methods (ARI):")
+> keys_h = list(results_h.keys())
+> agreement_h = {}
+> for name in results_h:
+>     avg_ari = np.mean([adjusted_rand_score(results_h[name], results_h[other])
+>                        for other in results_h if other != name])
+>     agreement_h[name] = avg_ari
+>
+> for name, score in sorted(agreement_h.items(), key=lambda x: -x[1]):
+>     print(f"  {name}: {score:.4f}")
+>
+> # Use the one with highest agreement
+> best_h_name = max(agreement_h, key=agreement_h.get)
+> print(f"\nUsing consensus winner: {best_h_name}")
+> best_h = results_h[best_h_name]
+>
+> # Save
+> out_h = pd.DataFrame({'pseudo_label': best_h})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+> print(f"Saved heart: {np.bincount(best_h)}")
+>
+> print("\nDone!")
+> EOF
+root@e8904edca287:/app# python3 /app/solve_final.py
+==================================================
+DIABETES DATASET
+==================================================
+
+Agreement between diabetes methods (ARI):
+  gmm_score vs kmeans_w: ARI=0.9096
+  gmm_score vs gmm_w: ARI=0.5108
+  gmm_score vs agg_w: ARI=0.9023
+  gmm_score vs rule_or: ARI=0.9023
+  kmeans_w vs agg_w: ARI=0.8589
+  kmeans_w vs rule_or: ARI=0.8589
+  gmm_w vs agg_w: ARI=0.5616
+  gmm_w vs rule_or: ARI=0.5616
+  agg_w vs rule_or: ARI=1.0000
+
+Diabetes cluster sizes:
+  gmm_score: {np.int64(0): np.int64(289), np.int64(1): np.int64(231)}
+  kmeans_w: {np.int32(0): np.int64(279), np.int32(1): np.int64(241)}
+  gmm_w: {np.int64(0): np.int64(287), np.int64(1): np.int64(233)}
+  agg_w: {np.int64(0): np.int64(298), np.int64(1): np.int64(222)}
+  rule_or: {np.int64(0): np.int64(222), np.int64(1): np.int64(298)}
+
+Best match to expected distribution: agg_w
+
+Average agreement with other methods:
+  agg_w: 0.8307
+  rule_or: 0.8307
+  gmm_score: 0.8063
+  kmeans_w: 0.7818
+  gmm_w: 0.5335
+
+Using consensus winner: agg_w
+Saved diabetes: [298 222]
+
+==================================================
+HEART DATASET
+==================================================
+
+Heart cluster sizes:
+  gmm_risk: {np.int64(0): np.int64(440), np.int64(1): np.int64(585)}
+  kmeans_risk: {np.int32(0): np.int64(432), np.int32(1): np.int64(593)}
+  kmeans_w: {np.int32(0): np.int64(637), np.int32(1): np.int64(388)}
+  gmm_w: {np.int64(0): np.int64(345), np.int64(1): np.int64(680)}
+  agg_w: {np.int64(0): np.int64(422), np.int64(1): np.int64(603)}
+  kmeans_key: {np.int32(0): np.int64(407), np.int32(1): np.int64(618)}
+  gmm_key: {np.int64(0): np.int64(345), np.int64(1): np.int64(680)}
+  agg_key: {np.int64(0): np.int64(581), np.int64(1): np.int64(444)}
+
+Agreement between heart methods (ARI):
+  kmeans_key: 0.4922
+  kmeans_w: 0.4836
+  gmm_w: 0.4641
+  gmm_key: 0.4641
+  agg_key: 0.4361
+  agg_w: 0.4350
+  gmm_risk: 0.3128
+  kmeans_risk: 0.3126
+
+Using consensus winner: kmeans_key
+Saved heart: [407 618]
+
+Done!
+root@e8904edca287:/app#

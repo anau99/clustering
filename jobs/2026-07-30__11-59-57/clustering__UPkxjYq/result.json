@@ -1,0 +1,116 @@
+{
+    "id": "8065d9b3-c52a-455e-868e-cd61d60df2e1",
+    "task_name": "clustering",
+    "trial_name": "clustering__UPkxjYq",
+    "trial_uri": "file:///home/an/Documents/assemple/cluster/jobs/2026-07-30__11-59-57/clustering__UPkxjYq",
+    "task_id": {
+        "path": "clustering"
+    },
+    "source": null,
+    "task_checksum": "9df5efd5d12362d0d167e4615636876cce7d7ef621c3a79029e85ecceb114cc2",
+    "config": {
+        "task": {
+            "path": "clustering",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "clustering__UPkxjYq",
+        "trials_dir": "jobs/2026-07-30__11-59-57",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "terminus-2",
+            "import_path": null,
+            "model_name": "openai/@openai/gpt-5.2",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {},
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {},
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "1b369ab5-f600-4398-bb5c-ea30c914b562"
+    },
+    "agent_info": {
+        "name": "terminus-2",
+        "version": "2.0.0",
+        "model_info": {
+            "name": "@openai/gpt-5.2",
+            "provider": "openai"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 81291,
+        "n_cache_tokens": 69376,
+        "n_output_tokens": 7406,
+        "cost_usd": 0.2733521,
+        "rollout_details": [],
+        "metadata": {
+            "n_episodes": 8,
+            "api_request_times_msec": [
+                8971.555709838867,
+                14927.045345306396,
+                5737.67352104187,
+                10095.916748046875,
+                8963.02843093872,
+                13437.915325164795,
+                4894.904851913452,
+                2396.6476917266846
+            ],
+            "summarization_count": 0
+        }
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.0
+        }
+    },
+    "exception_info": null,
+    "started_at": "2026-07-30T04:59:57.295628Z",
+    "finished_at": "2026-07-30T05:03:21.682925Z",
+    "environment_setup": {
+        "started_at": "2026-07-30T04:59:57.518701Z",
+        "finished_at": "2026-07-30T05:01:20.628099Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-07-30T05:01:20.628127Z",
+        "finished_at": "2026-07-30T05:01:22.962184Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-07-30T05:01:22.962290Z",
+        "finished_at": "2026-07-30T05:03:02.864653Z"
+    },
+    "verifier": {
+        "started_at": "2026-07-30T05:03:03.363890Z",
+        "finished_at": "2026-07-30T05:03:10.650039Z"
+    },
+    "step_results": null
+}

@@ -1,0 +1,679 @@
+[?2004hroot@4aa2ab795f3c:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@4aa2ab795f3c:/app# clear
+[?2004l[H[J[3J[?2004hroot@4aa2ab795f3c:/app# ls -la /app
+[?2004ltotal 80
+drwxr-xr-x 1 root root  4096 Jul 30 04:12 .
+drwxr-xr-x 1 root root  4096 Jul 30 05:01 ..
+-rw-r--r-- 1 root root   118 Jul 21 03:47 .dockerignore
+-rw-r--r-- 1 root root   676 Jul 25 04:40 Dockerfile
+-rw-rw-r-- 1 root root 19295 Jul 24 14:59 diabetes_data.csv
+-rw-rw-r-- 1 root root 35034 Jul 24 14:59 heart.csv
+-rw-r--r-- 1 root root   111 Jul 22 10:41 requirements.txt
+drwxrwxr-x 4 root root  4096 Jul 25 07:00 src
+[?2004hroot@4aa2ab795f3c:/app# find /app/src -maxdepth 3 -type f -print
+[?2004l/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+[?2004hroot@4aa2ab795f3c:/app# sed -n '1,200p' /app/src/transform/__init__.py
+[?2004lsed: can't read /app/src/transform/__init__.py: No such file or directory
+[?2004hroot@4aa2ab795f3c:/app# find /app/src/transform -type f -maxdepth 2 -print -exec sed -n '1,200p' {} \;
+[?2004lfind: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/src/transform/RobustScaler.py
+import pandas as pd
+from sklearn.preprocessing import RobustScaler
+
+
+def robust_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Scale features using statistics robust to outliers.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = RobustScaler()
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/HashEncoder.py
+import hashlib
+
+import pandas as pd
+
+
+def hash_encoder(df: pd.DataFrame, columns=None, n_features=8) -> pd.DataFrame:
+    """
+    Hash categorical columns into fixed-size integer features.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+
+        hashed = result[col].astype(str).apply(
+            lambda x: int(hashlib.md5(x.encode()).hexdigest(), 16)
+        )
+
+        result[col] = hashed % n_features
+
+    return result/app/src/transform/MaxAbsScaler.py
+import pandas as pd
+from sklearn.preprocessing import MaxAbsScaler
+
+
+def max_abs_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Scale numeric features by their maximum absolute value.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = MaxAbsScaler()
+
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/KBinsDiscretizer.py
+import pandas as pd
+from sklearn.preprocessing import KBinsDiscretizer
+
+
+def kbins_discretizer(df: pd.DataFrame,columns=None, n_bins=5, strategy="quantile") -> pd.DataFrame:
+    """
+    Discretize numeric columns into bins.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = KBinsDiscretizer(
+        n_bins=n_bins,
+        encode="ordinal",
+        strategy=strategy
+    )
+
+    result[columns] = encoder.fit_transform(result[columns])
+
+    return result/app/src/transform/FrequencyEncoder.py
+import pandas as pd
+
+
+def frequency_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Replace categories with their frequencies.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+        freq = result[col].value_counts(normalize=True)
+        result[col] = result[col].map(freq)
+
+    return result/app/src/transform/CountEncoder.py
+import pandas as pd
+
+
+def count_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Replace categories with occurrence counts.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+        counts = result[col].value_counts()
+        result[col] = result[col].map(counts)
+
+    return result/app/src/transform/StandardScaler.py
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+
+def standard_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Standardize selected columns.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = StandardScaler()
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/OrdinalEncoder.py
+import pandas as pd
+from sklearn.preprocessing import OrdinalEncoder
+
+
+def ordinal_encoder(df: pd.DataFrame, columns=None, encode_all=False) -> pd.DataFrame:
+    """
+    Encode selected categorical columns using OrdinalEncoder.
+    """
+    result = df.copy()
+
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OrdinalEncoder(
+        handle_unknown="use_encoded_value",
+        unknown_value=-1
+    )
+
+    result[columns] = encoder.fit_transform(result[columns])
+
+    return result/app/src/transform/OnehotEncoder.py
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+
+
+def one_hot_encoder(df: pd.DataFrame,columns=None,encode_all=False) -> pd.DataFrame:
+
+    result = df.copy()
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OneHotEncoder(
+        sparse_output=False,
+        handle_unknown="ignore"
+    )
+
+    encoded = encoder.fit_transform(result[columns])
+
+    encoded_df = pd.DataFrame(
+        encoded,
+        columns=encoder.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, encoded_df], axis=1)
+
+    return result/app/src/transform/Normalizer.py
+import pandas as pd
+from sklearn.preprocessing import Normalizer
+
+
+def normalizer(df: pd.DataFrame, columns=None, norm="l2") -> pd.DataFrame:
+    """
+    Normalize samples using L1, L2 or Max norm.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = Normalizer(norm=norm)
+
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/BinaryEncoder.py
+import pandas as pd
+
+
+def binary_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Binary encode categorical columns.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+
+        uniques = sorted(result[col].dropna().unique())
+        mapping = {v: i for i, v in enumerate(uniques)}
+
+        encoded = result[col].map(mapping).fillna(0).astype(int)
+
+        n_bits = max(1, len(mapping).bit_length())
+
+        binary = encoded.apply(
+            lambda x, n_bits=n_bits: list(map(int, format(x, f"0{n_bits}b")))
+        )
+
+        binary_df = pd.DataFrame(
+            binary.tolist(),
+            columns=[f"{col}_bin{i}" for i in range(n_bits)],
+            index=result.index
+        )
+
+        result.drop(columns=col, inplace=True)
+        result = pd.concat([result, binary_df], axis=1)
+
+    return result/app/src/transform/PolynomialFeatures.py
+import pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+
+
+def polynomial_features(df: pd.DataFrame, columns=None, degree=2, include_bias=False) -> pd.DataFrame:
+    """
+    Generate polynomial feature combinations.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    poly = PolynomialFeatures(
+        degree=degree,
+        include_bias=include_bias
+    )
+
+    transformed = poly.fit_transform(result[columns])
+
+    poly_df = pd.DataFrame(
+        transformed,
+        columns=poly.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, poly_df], axis=1)
+
+    return result[?2004hroot@4aa2ab795f3c:/app# find /app/src/cluster -type f -maxdepth 2 -print -exec sed -n '1,200p' {} \;
+[?2004lfind: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/src/cluster/agglomerative.py
+from sklearn.cluster import AgglomerativeClustering
+
+
+def agglomerative(X, k):
+    model = AgglomerativeClustering(
+        n_clusters=k,
+        linkage="ward"
+    )
+    return model.fit_predict(X)/app/src/cluster/minibatch_kmeans.py
+from sklearn.cluster import MiniBatchKMeans
+
+
+def minibatch_kmeans(X, k):
+    model = MiniBatchKMeans(
+        n_clusters=k,
+        random_state=42,
+        batch_size=1024
+    )
+    return model.fit_predict(X)/app/src/cluster/birch.py
+from sklearn.cluster import Birch
+
+
+def birch(X, k):
+    model = Birch(
+        n_clusters=k
+    )
+    return model.fit_predict(X)/app/src/cluster/gaussian_mixture.py
+from sklearn.mixture import GaussianMixture
+
+
+def gaussian_mixture(X, k):
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="full",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/kmean.py
+from sklearn.cluster import KMeans
+
+
+def kmeans(X, k):
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init="auto",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/spectral.py
+from sklearn.cluster import SpectralClustering
+
+
+def spectral(X, k):
+    model = SpectralClustering(
+        n_clusters=k,
+        affinity="nearest_neighbors",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/bisecting_kmeans.py
+from sklearn.cluster import BisectingKMeans
+
+
+def bisecting_kmeans(X, k):
+    model = BisectingKMeans(
+        n_clusters=k,
+        random_state=42
+    )
+    return model.fit_predict(X)[?2004hroot@4aa2ab795f3c:/app# python3 - <<'PY'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> for path in ['/app/diabetes_data.csv','/app/heart.csv']:
+[?2004l[?2004h>     df=pd.read_csv(path)
+[?2004l[?2004h>     print('\n==',path,'==')
+[?2004l[?2004h>     print('shape',df.shape)
+[?2004l[?2004h>     print('columns',list(df.columns))
+[?2004l[?2004h>     print(df.head(3))
+[?2004l[?2004h>     print(df.dtypes)
+[?2004l[?2004h> PY
+[?2004l
+== /app/diabetes_data.csv ==
+shape (520, 16)
+columns ['age', 'gender', 'polyuria', 'polydipsia', 'sudden_weight_loss', 'weakness', 'polyphagia', 'genital_thrush', 'visual_blurring', 'itching', 'irritability', 'delayed_healing', 'partial_paresis', 'muscle_stiffness', 'alopecia', 'obesity']
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+
+[3 rows x 16 columns]
+age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+
+== /app/heart.csv ==
+shape (1025, 13)
+columns ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+[?2004hroot@4aa2ab795f3c:/app# cat > /app/run_cluster.py <<'PY'
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> from sklearn.compose import ColumnTransformer
+[?2004l[?2004h> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+[?2004l[?2004h> from sklearn.pipeline import Pipeline
+[?2004l[?2004h> from sklearn.cluster import KMeans, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004l[?2004h> from sklearn.metrics import silhouette_score
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def _best_by_silhouette(X, candidates):
+[?2004l[?2004h>     best = None
+[?2004l[?2004h>     best_score = -1e9
+[?2004l[?2004h>     for name, model in candidates:
+[?2004l[?2004h>         if name == 'gmm':
+[?2004l[?2004h>             labels = model.fit_predict(X)
+[?2004l[?2004h>         else:
+[?2004l[?2004h>             labels = model.fit_predict(X)
+[?2004l[?2004h>         # silhouette requires >1 label
+[?2004l[?2004h>         if len(np.unique(labels)) < 2:
+[?2004l[?2004h>             score = -1e9
+[?2004l[?2004h>         else:
+[?2004l[?2004h>             score = silhouette_score(X, labels, metric='euclidean')
+[?2004l[?2004h>         if score > best_score:
+[?2004l[?2004h>             best_score = score
+[?2004l[?2004h>             best = (name, model, labels, score)
+[?2004l[?2004h>     return best
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_diabetes(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h>     # features
+[?2004l[?2004h>     num_cols = ['age']
+[?2004l[?2004h>     cat_cols = ['gender']
+[?2004l[?2004h>     other_cols = [c for c in df.columns if c not in num_cols + cat_cols]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ('num', StandardScaler(), num_cols),
+[?2004l[?2004h>             ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_cols),
+[?2004l[?2004h>             ('bin', 'passthrough', other_cols),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder='drop'
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h> 
+[?2004l[?2004h>     candidates = [
+[?2004l[?2004h>         ('kmeans', KMeans(n_clusters=2, n_init='auto', random_state=42)),
+[?2004l[?2004h>         ('gmm', GaussianMixture(n_components=2, covariance_type='full', random_state=42)),
+[?2004l[?2004h>         ('agg', AgglomerativeClustering(n_clusters=2, linkage='ward')),
+[?2004l[?2004h>     ]
+[?2004l[?2004h> 
+[?2004l[?2004h>     name, model, labels, score = _best_by_silhouette(X, candidates)
+[?2004l[?2004h>     labels = labels.astype(int)
+[?2004l[?2004h>     # ensure 0/1
+[?2004l[?2004h>     labels = (labels == np.min(labels)).astype(int) if set(np.unique(labels))=={0,1} else (labels % 2)
+[?2004l[?2004h> 
+[?2004l[?2004h>     out = pd.DataFrame({'pseudo_label': labels.astype(int)})
+[?2004l[?2004h>     out.to_csv(out_path, index=False)
+[?2004l[?2004h>     return name, score
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_heart(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h> 
+[?2004l[?2004h>     cat_cols = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+[?2004l[?2004h>     num_cols = [c for c in df.columns if c not in cat_cols]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ('num', StandardScaler(), num_cols),
+[?2004l[?2004h>             ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), cat_cols),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder='drop'
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h> 
+[?2004l[?2004h>     candidates = [
+[?2004l[?2004h>         ('kmeans', KMeans(n_clusters=2, n_init='auto', random_state=42)),
+[?2004l[?2004h>         ('gmm', GaussianMixture(n_components=2, covariance_type='full', random_state=42)),
+[?2004l[?2004h>         ('agg', AgglomerativeClustering(n_clusters=2, linkage='ward')),
+[?2004l[?2004h>     ]
+[?2004l[?2004h> 
+[?2004l[?2004h>     name, model, labels, score = _best_by_silhouette(X, candidates)
+[?2004l[?2004h>     labels = labels.astype(int)
+[?2004l[?2004h>     labels = (labels == np.min(labels)).astype(int) if set(np.unique(labels))=={0,1} else (labels % 2)
+[?2004l[?2004h> 
+[?2004l[?2004h>     out = pd.DataFrame({'pseudo_label': labels.astype(int)})
+[?2004l[?2004h>     out.to_csv(out_path, index=False)
+[?2004l[?2004h>     return name, score
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> if __name__ == '__main__':
+[?2004l[?2004h>     d_name, d_score = cluster_diabetes('/app/diabetes_data.csv', '/app/output_diabetes_data.csv')
+[?2004l[?2004h>     h_name, h_score = cluster_heart('/app/heart.csv', '/app/output_heart.csv')
+[?2004l[?2004h>     print('diabetes best:', d_name, 'silhouette:', d_score)
+[?2004l[?2004h>     print('heart best:', h_name, 'silhouette:', h_score)
+[?2004l[?2004h> PY
+[?2004l[?2004hroot@4aa2ab795f3c:/app# python3 /app/run_cluster.py
+[?2004lpython3 - <<'PY'
+import pandas as pd
+for path, n in [('/app/output_diabetes_data.csv',520),('/app/output_heart.csv',1025)]:
+    df=pd.read_csv(path)
+    print(path, df.shape)
+    print(df.columns)
+    vals=set(df['pseudo_label'].unique())
+    print('unique', vals, 'counts', df['pseudo_label'].value_counts().to_dict())
+    assert df.shape[0]==n
+    assert list(df.columns)==['pseudo_label']
+    assert vals.issubset({0,1})
+print('ok')
+PY
+head -n 5 /app/output_diabetes_data.csv
+head -n 5 /app/output_heart.csv
+diabetes best: kmeans silhouette: 0.19035693652489283
+heart best: kmeans silhouette: 0.16927650085105198
+[?2004hroot@4aa2ab795f3c:/app# python3 - <<'PY'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> for path, n in [('/app/output_diabetes_data.csv',520),('/app/output_heart.csv',1025)]:
+[?2004l[?2004h>     df=pd.read_csv(path)
+[?2004l[?2004h>     print(path, df.shape)
+[?2004l[?2004h>     print(df.columns)
+[?2004l[?2004h>     vals=set(df['pseudo_label'].unique())
+[?2004l[?2004h>     print('unique', vals, 'counts', df['pseudo_label'].value_counts().to_dict())
+[?2004l[?2004h>     assert df.shape[0]==n
+[?2004l[?2004h>     assert list(df.columns)==['pseudo_label']
+[?2004l[?2004h>     assert vals.issubset({0,1})
+[?2004l[?2004h> print('ok')
+[?2004l[?2004h> PY
+[?2004l/app/output_diabetes_data.csv (520, 1)
+Index(['pseudo_label'], dtype='str')
+unique {np.int64(0), np.int64(1)} counts {1: 315, 0: 205}
+/app/output_heart.csv (1025, 1)
+Index(['pseudo_label'], dtype='str')
+unique {np.int64(0), np.int64(1)} counts {0: 563, 1: 462}
+ok
+[?2004hroot@4aa2ab795f3c:/app# head -n 5 /app/output_diabetes_data.csv
+[?2004lpseudo_label
+0
+1
+0
+0
+[?2004hroot@4aa2ab795f3c:/app# head -n 5 /app/output_heart.csv
+[?2004lpseudo_label
+0
+1
+1
+0
+[?2004hroot@4aa2ab795f3c:/app# python3 /app/run_cluster.py
+[?2004lls -ლა /app/output_diabetes_data.csv /app/output_heart.csv
+python3 - <<'PY'
+import pandas as pd
+for path, n in [('/app/output_diabetes_data.csv',520),('/app/output_heart.csv',1025)]:
+    df=pd.read_csv(path)
+    print(path, 'shape', df.shape)
+    print('columns', list(df.columns))
+    vals=set(df['pseudo_label'].unique())
+    print('unique', vals)
+    print('counts', df['pseudo_label'].value_counts().to_dict())
+    assert df.shape==(n,1)
+    assert list(df.columns)==['pseudo_label']
+    assert vals.issubset({0,1})
+print('ok')
+PY
+head -n 5 /app/output_diabetes_data.csv
+head -n 5 /app/output_heart.csv
+diabetes best: kmeans silhouette: 0.19035693652489283
+heart best: kmeans silhouette: 0.16927650085105198
+[?2004hroot@4aa2ab795f3c:/app# ls -ლა /app/output_diabetes_data.csv /app/output_heart.csv
+[?2004lls: invalid option -- '�'
+Try 'ls --help' for more information.
+[?2004hroot@4aa2ab795f3c:/app# python3 - <<'PY'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> for path, n in [('/app/output_diabetes_data.csv',520),('/app/output_heart.csv',1025)]:
+[?2004l[?2004h>     df=pd.read_csv(path)
+[?2004l[?2004h>     print(path, 'shape', df.shape)
+[?2004l[?2004h>     print('columns', list(df.columns))
+[?2004l[?2004h>     vals=set(df['pseudo_label'].unique())
+[?2004l[?2004h>     print('unique', vals)
+[?2004l[?2004h>     print('counts', df['pseudo_label'].value_counts().to_dict())
+[?2004l[?2004h>     assert df.shape==(n,1)
+[?2004l[?2004h>     assert list(df.columns)==['pseudo_label']
+[?2004l[?2004h>     assert vals.issubset({0,1})
+[?2004l[?2004h> print('ok')
+[?2004l[?2004h> PY
+[?2004l/app/output_diabetes_data.csv shape (520, 1)
+columns ['pseudo_label']
+unique {np.int64(0), np.int64(1)}
+counts {1: 315, 0: 205}
+/app/output_heart.csv shape (1025, 1)
+columns ['pseudo_label']
+unique {np.int64(0), np.int64(1)}
+counts {0: 563, 1: 462}
+ok
+[?2004hroot@4aa2ab795f3c:/app# head -n 5 /app/output_diabetes_data.csv
+[?2004lpseudo_label
+0
+1
+0
+0
+[?2004hroot@4aa2ab795f3c:/app# head -n 5 /app/output_heart.csv
+[?2004lpseudo_label
+0
+1
+1
+0
+[?2004hroot@4aa2ab795f3c:/app# 

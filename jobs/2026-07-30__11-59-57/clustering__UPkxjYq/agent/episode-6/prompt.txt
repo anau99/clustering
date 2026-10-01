@@ -1,0 +1,104 @@
+New Terminal Output:
+
+mns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok')"
+Wrote /app/output_diabetes_data.csv and /app/output_heart.csv
+root@3d81a04076cb:/app# ls -la /app/output_diabetes_data.csv /app/output_heart.csv
+-rw-r--r-- 1 root root 1053 Jul 30 05:02 /app/output_diabetes_data.csv
+-rw-r--r-- 1 root root 2063 Jul 30 05:02 /app/output_heart.csv
+root@3d81a04076cb:/app# python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes
+ counts:', d['pseudo_label'].value_counts().to_dict()); print('heart counts:', h['pseudo_label'].value_counts().to_dict()); assert list(d.columns)==['pseudo_lab
+el']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1});
+print('format ok')"
+diabetes counts: {0: 274, 1: 246}
+heart counts: {1: 560, 0: 465}
+format ok
+root@3d81a04076cb:/app# cat > /app/run_cluster.py <<'PY'
+> import numpy as np
+> import pandas as pd
+>
+> from sklearn.compose import ColumnTransformer
+> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+> from sklearn.decomposition import PCA
+> from sklearn.cluster import KMeans
+> from sklearn.metrics import silhouette_score
+>
+>
+> def select_kmeans(X, seeds=(0, 1, 2, 3, 4, 7, 11, 42, 101, 202), min_prop=0.1):
+>     """Pick KMeans run by silhouette on PCA space with a penalty for tiny clusters."""
+>     # PCA for speed/stability in silhouette computation
+>     n_comp = int(min(10, X.shape[1]))
+>     Z = PCA(n_components=n_comp, random_state=0).fit_transform(X)
+>
+>     best = None
+>     best_score = -1e9
+>
+>     for seed in seeds:
+>         km = KMeans(n_clusters=2, n_init=50, random_state=seed)
+>         lab = km.fit_predict(X)
+>
+>         # balance penalty
+>         counts = np.bincount(lab, minlength=2)
+>         props = counts / counts.sum()
+>         small = props.min()
+>         penalty = 0.0
+>         if small < min_prop:
+>             penalty = (min_prop - small) * 5.0  # strong penalty
+>
+>         # silhouette on reduced space
+>         if len(np.unique(lab)) < 2:
+>             continue
+>         sil = silhouette_score(Z, lab)
+>         score = sil - penalty
+>
+>         if score > best_score:
+>             best_score = score
+>             best = lab
+>
+>     return best
+>
+>
+> def cluster_diabetes(in_path, out_path):
+>     df = pd.read_csv(in_path)
+>
+>     # Encode gender to 0/1, keep all other binary columns numeric
+>     df = df.copy()
+>     df["gender"] = df["gender"].map({"Female": 0, "Male": 1}).astype(int)
+>
+>     X = StandardScaler().fit_transform(df.values)
+>     labels = select_kmeans(X, min_prop=0.15)
+>
+>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+>
+>
+> def cluster_heart(in_path, out_path):
+>     df = pd.read_csv(in_path)
+>
+>     # Binary treated as numeric; multi-class categoricals one-hot
+>     bin_cols = ["sex", "fbs", "exang"]
+>     multi_cat = ["cp", "restecg", "slope", "ca", "thal"]
+>     num_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
+>
+>     pre = ColumnTransformer(
+>         transformers=[
+>             ("num", StandardScaler(), num_cols + bin_cols),
+>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), multi_cat),
+>         ],
+>         remainder="drop",
+>     )
+>
+>     X = pre.fit_transform(df)
+>     labels = select_kmeans(X, min_prop=0.15)
+>
+>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+>
+>
+> if __name__ == "__main__":
+>     cluster_diabetes("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+>     cluster_heart("/app/heart.csv", "/app/output_heart.csv")
+>     print("Wrote /app/output_diabetes_data.csv and /app/output_heart.csv")
+> PY
+root@3d81a04076cb:/app# python3 /app/run_cluster.py
+python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes counts:', d['pseudo_lab
+el'].value_counts().to_dict()); print('heart counts:', h['pseudo_label'].value_counts().to_dict()); assert list(d.columns)==['pseudo_label']; assert list(h.colu
+mns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1});"
+

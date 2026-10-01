@@ -1,0 +1,74 @@
+New Terminal Output:
+
+root@e123fae6e01b:/app# cat > /app/save_final.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> from sklearn.preprocessing import StandardScaler
+> from sklearn.cluster import KMeans
+>
+> # ============ DIABETES ============
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> df_d = df_diabetes.copy()
+> df_d['gender'] = (df_d['gender'] == 'Male').astype(int)
+>
+> # Scale age, weight key features
+> df_d_proc = df_d.copy()
+> df_d_proc['age'] = StandardScaler().fit_transform(df_d_proc[['age']])
+> df_d_proc['polyuria'] = df_d_proc['polyuria'] * 3
+> df_d_proc['polydipsia'] = df_d_proc['polydipsia'] * 3
+> df_d_proc['sudden_weight_loss'] = df_d_proc['sudden_weight_loss'] * 2
+> df_d_proc['gender'] = df_d_proc['gender'] * 2
+>
+> labels_d = KMeans(n_clusters=2, n_init=20, random_state=0).fit_predict(df_d_proc.values)
+> print(f"Diabetes: {np.bincount(labels_d)}")
+>
+> # ============ HEART ============
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> # Refined scoring approach based on domain knowledge
+> score = np.zeros(len(df_heart))
+> score += (df_heart['cp'] == 0).astype(float) * 2.0
+> score += (df_heart['thal'] == 2).astype(float) * 2.0
+> score += (df_heart['thal'] == 3).astype(float) * 1.0
+> score += np.array(df_heart['ca']) * 2.0
+> score += np.array(df_heart['exang']) * 2.0
+> score += np.array(df_heart['oldpeak']) * 1.0
+> score += (df_heart['slope'] == 0).astype(float) * 1.0
+> score -= np.array(df_heart['thalach']) / 50.0
+> score += np.array(df_heart['sex']) * 0.5
+> score += np.array(df_heart['age']) / 50.0
+> score += (df_heart['restecg'] > 0).astype(float) * 0.5
+> score += np.array(df_heart['fbs']) * 0.3
+>
+> # Use 45th percentile as threshold (better separation)
+> threshold = np.percentile(np.array(score), 45)
+> labels_h = (np.array(score) >= threshold).astype(int)
+> print(f"Heart: {np.bincount(labels_h)}")
+>
+> # Verify
+> ca_pos = df_heart['ca'] > 0
+> ca_sep = max(((labels_h==0)&ca_pos).sum(), ((labels_h==1)&ca_pos).sum()) / ca_pos.sum()
+> exang_pos = df_heart['exang'] == 1
+> exang_sep = max(((labels_h==0)&exang_pos).sum(), ((labels_h==1)&exang_pos).sum()) / exang_pos.sum()
+> print(f"Heart verification: ca_sep={ca_sep:.3f}, exang_sep={exang_sep:.3f}")
+>
+> # ============ SAVE ============
+> out_d = pd.DataFrame({'pseudo_label': labels_d})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+>
+> out_h = pd.DataFrame({'pseudo_label': labels_h})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+>
+> print("\nFiles saved!")
+> print(f"Diabetes shape: {out_d.shape}, values: {sorted(out_d['pseudo_label'].unique())}")
+> print(f"Heart shape: {out_h.shape}, values: {sorted(out_h['pseudo_label'].unique())}")
+> EOF
+root@e123fae6e01b:/app# python /app/save_final.py
+Diabetes: [247 273]
+Heart: [460 565]
+Heart verification: ca_sep=0.890, exang_sep=0.948
+
+Files saved!
+Diabetes shape: (520, 1), values: [np.int32(0), np.int32(1)]
+Heart shape: (1025, 1), values: [np.int64(0), np.int64(1)]
+root@e123fae6e01b:/app#

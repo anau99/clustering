@@ -1,0 +1,676 @@
+[?2004hroot@613d962e1432:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@613d962e1432:/app# clear
+[?2004l[H[J[3J[?2004hroot@613d962e1432:/app# ls -ლა
+[?2004lls: invalid option -- '�'
+Try 'ls --help' for more information.
+[?2004hroot@613d962e1432:/app# find /app -maxdepth 3 -type f -print
+[?2004l/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+/app/.dockerignore
+/app/heart.csv
+/app/diabetes_data.csv
+/app/Dockerfile
+/app/requirements.txt
+[?2004hroot@613d962e1432:/app# ls -la /app/src
+[?2004ltotal 16
+drwxrwxr-x 4 root root 4096 Jul 25 07:00 .
+drwxr-xr-x 1 root root 4096 Jul 30 04:12 ..
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 cluster
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 transform
+[?2004hroot@613d962e1432:/app# find /app/src -maxdepth 3 -type f -print
+[?2004l/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+[?2004hroot@613d962e1432:/app# python3 -c "import pandas as pd; print('diabetes', pd.read_csv('/app/diabetes_data.csv').shape); print(pd.read_csv('/app/diabetes_data.csv').head()); print('heart', pd.read_csv('/app/heart.csv').shape); print(pd.read_csv('/app/heart.csv').head())"
+[?2004ldiabetes (520, 16)
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+3   45   Male         0           0                   1         1  ...             0                1                0                 0         0        0
+4   60   Male         1           1                   1         1  ...             1                1                1                 1         1        1
+
+[5 rows x 16 columns]
+heart (1025, 13)
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+3   61    1   0       148   203    0        1      161      0      0.0      2   1     3
+4   62    0   0       138   294    1        1      106      0      1.9      1   3     2
+python3 -c "import pandas as pd; d=pd.read_csv('/app/diabetes_data.csv'); h=pd.read_csv('/app/heart.csv'); print('diabetes dtypes:\n', d.dtypes); print('\nmissing diabetes:', d.isna().sum().sum()); print('\nheart dtypes:\n', h.dtypes); print('\nmissing heart:', h.isna().sum().sum())"
+[?2004hroot@613d962e1432:/app# python3 -c "import pandas as pd; d=pd.read_csv('/app/diabetes_data.csv'); h=pd.read_csv('/app/heart.csv'); print('diabetes dtypes:\n', d.dtypes); print('\nmissing diabetes:', d.isna().sum().sum()); print('\nheart dtypes:\n', h.dtypes); print('\nmissing heart:', h.isna().sum().sum())"
+[?2004ldiabetes dtypes:
+ age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+
+missing diabetes: 0
+
+heart dtypes:
+ age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+
+missing heart: 0
+[?2004hroot@613d962e1432:/app# sed -n '1,200p' /app/src/transform/__init__.py 2>/dev/null || true
+[?2004l[?2004hroot@613d962e1432:/app# find /app/src/transform -type f -maxdepth 2 -print -exec sed -n '1,200p' {} \;
+[?2004lfind: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/src/transform/RobustScaler.py
+import pandas as pd
+from sklearn.preprocessing import RobustScaler
+
+
+def robust_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Scale features using statistics robust to outliers.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = RobustScaler()
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/HashEncoder.py
+import hashlib
+
+import pandas as pd
+
+
+def hash_encoder(df: pd.DataFrame, columns=None, n_features=8) -> pd.DataFrame:
+    """
+    Hash categorical columns into fixed-size integer features.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+
+        hashed = result[col].astype(str).apply(
+            lambda x: int(hashlib.md5(x.encode()).hexdigest(), 16)
+        )
+
+        result[col] = hashed % n_features
+
+    return result/app/src/transform/MaxAbsScaler.py
+import pandas as pd
+from sklearn.preprocessing import MaxAbsScaler
+
+
+def max_abs_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Scale numeric features by their maximum absolute value.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = MaxAbsScaler()
+
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/KBinsDiscretizer.py
+import pandas as pd
+from sklearn.preprocessing import KBinsDiscretizer
+
+
+def kbins_discretizer(df: pd.DataFrame,columns=None, n_bins=5, strategy="quantile") -> pd.DataFrame:
+    """
+    Discretize numeric columns into bins.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = KBinsDiscretizer(
+        n_bins=n_bins,
+        encode="ordinal",
+        strategy=strategy
+    )
+
+    result[columns] = encoder.fit_transform(result[columns])
+
+    return result/app/src/transform/FrequencyEncoder.py
+import pandas as pd
+
+
+def frequency_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Replace categories with their frequencies.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+        freq = result[col].value_counts(normalize=True)
+        result[col] = result[col].map(freq)
+
+    return result/app/src/transform/CountEncoder.py
+import pandas as pd
+
+
+def count_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Replace categories with occurrence counts.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+        counts = result[col].value_counts()
+        result[col] = result[col].map(counts)
+
+    return result/app/src/transform/StandardScaler.py
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+
+def standard_scaler(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Standardize selected columns.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = StandardScaler()
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/OrdinalEncoder.py
+import pandas as pd
+from sklearn.preprocessing import OrdinalEncoder
+
+
+def ordinal_encoder(df: pd.DataFrame, columns=None, encode_all=False) -> pd.DataFrame:
+    """
+    Encode selected categorical columns using OrdinalEncoder.
+    """
+    result = df.copy()
+
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OrdinalEncoder(
+        handle_unknown="use_encoded_value",
+        unknown_value=-1
+    )
+
+    result[columns] = encoder.fit_transform(result[columns])
+
+    return result/app/src/transform/OnehotEncoder.py
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+
+
+def one_hot_encoder(df: pd.DataFrame,columns=None,encode_all=False) -> pd.DataFrame:
+
+    result = df.copy()
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OneHotEncoder(
+        sparse_output=False,
+        handle_unknown="ignore"
+    )
+
+    encoded = encoder.fit_transform(result[columns])
+
+    encoded_df = pd.DataFrame(
+        encoded,
+        columns=encoder.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, encoded_df], axis=1)
+
+    return result/app/src/transform/Normalizer.py
+import pandas as pd
+from sklearn.preprocessing import Normalizer
+
+
+def normalizer(df: pd.DataFrame, columns=None, norm="l2") -> pd.DataFrame:
+    """
+    Normalize samples using L1, L2 or Max norm.
+    """
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    scaler = Normalizer(norm=norm)
+
+    result[columns] = scaler.fit_transform(result[columns])
+
+    return result/app/src/transform/BinaryEncoder.py
+import pandas as pd
+
+
+def binary_encoder(df: pd.DataFrame, columns=None) -> pd.DataFrame:
+    """
+    Binary encode categorical columns.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    for col in columns:
+
+        uniques = sorted(result[col].dropna().unique())
+        mapping = {v: i for i, v in enumerate(uniques)}
+
+        encoded = result[col].map(mapping).fillna(0).astype(int)
+
+        n_bits = max(1, len(mapping).bit_length())
+
+        binary = encoded.apply(
+            lambda x, n_bits=n_bits: list(map(int, format(x, f"0{n_bits}b")))
+        )
+
+        binary_df = pd.DataFrame(
+            binary.tolist(),
+            columns=[f"{col}_bin{i}" for i in range(n_bits)],
+            index=result.index
+        )
+
+        result.drop(columns=col, inplace=True)
+        result = pd.concat([result, binary_df], axis=1)
+
+    return result/app/src/transform/PolynomialFeatures.py
+import pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+
+
+def polynomial_features(df: pd.DataFrame, columns=None, degree=2, include_bias=False) -> pd.DataFrame:
+    """
+    Generate polynomial feature combinations.
+    """
+
+    result = df.copy()
+
+    if columns is None:
+        columns = result.select_dtypes(include=["number"]).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    poly = PolynomialFeatures(
+        degree=degree,
+        include_bias=include_bias
+    )
+
+    transformed = poly.fit_transform(result[columns])
+
+    poly_df = pd.DataFrame(
+        transformed,
+        columns=poly.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, poly_df], axis=1)
+
+    return result[?2004hroot@613d962e1432:/app# find /app/src/cluster -type f -maxdepth 2 -print -exec sed -n '1,240p' {} \;
+[?2004lfind: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/src/cluster/agglomerative.py
+from sklearn.cluster import AgglomerativeClustering
+
+
+def agglomerative(X, k):
+    model = AgglomerativeClustering(
+        n_clusters=k,
+        linkage="ward"
+    )
+    return model.fit_predict(X)/app/src/cluster/minibatch_kmeans.py
+from sklearn.cluster import MiniBatchKMeans
+
+
+def minibatch_kmeans(X, k):
+    model = MiniBatchKMeans(
+        n_clusters=k,
+        random_state=42,
+        batch_size=1024
+    )
+    return model.fit_predict(X)/app/src/cluster/birch.py
+from sklearn.cluster import Birch
+
+
+def birch(X, k):
+    model = Birch(
+        n_clusters=k
+    )
+    return model.fit_predict(X)/app/src/cluster/gaussian_mixture.py
+from sklearn.mixture import GaussianMixture
+
+
+def gaussian_mixture(X, k):
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="full",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/kmean.py
+from sklearn.cluster import KMeans
+
+
+def kmeans(X, k):
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init="auto",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/spectral.py
+from sklearn.cluster import SpectralClustering
+
+
+def spectral(X, k):
+    model = SpectralClustering(
+        n_clusters=k,
+        affinity="nearest_neighbors",
+        random_state=42
+    )
+    return model.fit_predict(X)/app/src/cluster/bisecting_kmeans.py
+from sklearn.cluster import BisectingKMeans
+
+
+def bisecting_kmeans(X, k):
+    model = BisectingKMeans(
+        n_clusters=k,
+        random_state=42
+    )
+    return model.fit_predict(X)[?2004hroot@613d962e1432:/app# find /app -maxdepth 2 -type f \( -name '*.py' -o -name '*.ipynb' -o -name 'README*' \) -print
+[?2004l[?2004hroot@613d962e1432:/app# cat > /app/run_cluster.py <<'PY'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> 
+[?2004l[?2004h> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+[?2004l[?2004h> from sklearn.compose import ColumnTransformer
+[?2004l[?2004h> from sklearn.pipeline import Pipeline
+[?2004l[?2004h> from sklearn.metrics import silhouette_score, calinski_harabasz_score
+[?2004l[?2004h> 
+[?2004l[?2004h> from src.cluster.kmean import kmeans
+[?2004l[?2004h> from src.cluster.gaussian_mixture import gaussian_mixture
+[?2004l[?2004h> from src.cluster.spectral import spectral
+[?2004l[?2004h> from src.cluster.agglomerative import agglomerative
+[?2004l[?2004h> from src.cluster.birch import birch
+[?2004l[?2004h> from src.cluster.minibatch_kmeans import minibatch_kmeans
+[?2004l[?2004h> from src.cluster.bisecting_kmeans import bisecting_kmeans
+[?2004l[?2004h> 
+[?2004l[?2004h> CLUSTERERS = {
+[?2004l[?2004h>     "kmeans": kmeans,
+[?2004l[?2004h>     "gmm": gaussian_mixture,
+[?2004l[?2004h>     "spectral": spectral,
+[?2004l[?2004h>     "agglomerative": agglomerative,
+[?2004l[?2004h>     "birch": birch,
+[?2004l[?2004h>     "minibatch": minibatch_kmeans,
+[?2004l[?2004h>     "bisect": bisecting_kmeans,
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def eval_clustering(X, y):
+[?2004l[?2004h>     # Some clusterers can return a single cluster in edge cases; guard.
+[?2004l[?2004h>     if len(np.unique(y)) < 2:
+[?2004l[?2004h>         return {"sil": -1.0, "ch": -1.0}
+[?2004l[?2004h>     out = {}
+[?2004l[?2004h>     try:
+[?2004l[?2004h>         out["sil"] = float(silhouette_score(X, y, metric="euclidean"))
+[?2004l[?2004h>     except Exception:
+[?2004l[?2004h>         out["sil"] = -1.0
+[?2004l[?2004h>     try:
+[?2004l[?2004h>         out["ch"] = float(calinski_harabasz_score(X, y))
+[?2004l[?2004h>     except Exception:
+[?2004l[?2004h>         out["ch"] = -1.0
+[?2004l[?2004h>     return out
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def choose_best(df, preprocessors, k=2, random_tries=1):
+[?2004l[?2004h>     best = None
+[?2004l[?2004h>     for pname, pre in preprocessors.items():
+[?2004l[?2004h>         X = pre.fit_transform(df)
+[?2004l[?2004h>         # Ensure dense float
+[?2004l[?2004h>         if hasattr(X, "toarray"):
+[?2004l[?2004h>             X = X.toarray()
+[?2004l[?2004h>         X = np.asarray(X, dtype=float)
+[?2004l[?2004h> 
+[?2004l[?2004h>         for cname, clusterer in CLUSTERERS.items():
+[?2004l[?2004h>             # spectral can be slow; still ok for these sizes
+[?2004l[?2004h>             try:
+[?2004l[?2004h>                 y = clusterer(X, k)
+[?2004l[?2004h>             except Exception as e:
+[?2004l[?2004h>                 continue
+[?2004l[?2004h> 
+[?2004l[?2004h>             scores = eval_clustering(X, y)
+[?2004l[?2004h>             # Combine metrics: prioritize silhouette, then CH (scaled)
+[?2004l[?2004h>             combo = scores["sil"] + 1e-4 * scores["ch"]
+[?2004l[?2004h>             cand = (combo, scores, pname, cname, y)
+[?2004l[?2004h>             if best is None or cand[0] > best[0]:
+[?2004l[?2004h>                 best = cand
+[?2004l[?2004h> 
+[?2004l[?2004h>     if best is None:
+[?2004l[?2004h>         raise RuntimeError("No clustering succeeded")
+[?2004l[?2004h>     return best
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def main():
+[?2004l[?2004h>     # Diabetes
+[?2004l[?2004h>     d = pd.read_csv("/app/diabetes_data.csv")
+[?2004l[?2004h>     d_cat = ["gender"]
+[?2004l[?2004h>     d_num = [c for c in d.columns if c not in d_cat]
+[?2004l[?2004h> 
+[?2004l[?2004h>     diabetes_pre = {
+[?2004l[?2004h>         "onehot_gender_std": ColumnTransformer(
+[?2004l[?2004h>             [
+[?2004l[?2004h>                 ("cat", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), d_cat),
+[?2004l[?2004h>                 ("num", Pipeline([("sc", StandardScaler())]), d_num),
+[?2004l[?2004h>             ],
+[?2004l[?2004h>             remainder="drop",
+[?2004l[?2004h>         ),
+[?2004l[?2004h>         "std_all_numeric_after_binary_gender": ColumnTransformer(
+[?2004l[?2004h>             [
+[?2004l[?2004h>                 ("cat", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), d_cat),
+[?2004l[?2004h>                 ("num", "passthrough", d_num),
+[?2004l[?2004h>             ],
+[?2004l[?2004h>             remainder="drop",
+[?2004l[?2004h>         ),
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     best_d = choose_best(d, diabetes_pre, k=2)
+[?2004l[?2004h>     _, scores_d, pname_d, cname_d, y_d = best_d
+[?2004l[?2004h>     print("BEST diabetes:", pname_d, cname_d, scores_d)
+[?2004l[?2004h> 
+[?2004l[?2004h>     out_d = pd.DataFrame({"pseudo_label": pd.Series(y_d).astype(int)})
+[?2004l[?2004h>     out_d.to_csv("/app/output_diabetes_data.csv", index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h>     # Heart
+[?2004l[?2004h>     h = pd.read_csv("/app/heart.csv")
+[?2004l[?2004h>     # As per prompt: numeric: trestbps, chol, thalach, oldpeak. others (except age) are categorical.
+[?2004l[?2004h>     h_num = ["trestbps", "chol", "thalach", "oldpeak", "age"]
+[?2004l[?2004h>     h_cat = [c for c in h.columns if c not in h_num]
+[?2004l[?2004h> 
+[?2004l[?2004h>     heart_pre = {
+[?2004l[?2004h>         "onehot_cat_std_num": ColumnTransformer(
+[?2004l[?2004h>             [
+[?2004l[?2004h>                 ("cat", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), h_cat),
+[?2004l[?2004h>                 ("num", StandardScaler(), h_num),
+[?2004l[?2004h>             ],
+[?2004l[?2004h>             remainder="drop",
+[?2004l[?2004h>         ),
+[?2004l[?2004h>         "std_all_as_numeric": ColumnTransformer(
+[?2004l[?2004h>             [("all", StandardScaler(), h.columns.tolist())],
+[?2004l[?2004h>             remainder="drop",
+[?2004l[?2004h>         ),
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     best_h = choose_best(h, heart_pre, k=2)
+[?2004l[?2004h>     _, scores_h, pname_h, cname_h, y_h = best_h
+[?2004l[?2004h>     print("BEST heart:", pname_h, cname_h, scores_h)
+[?2004l[?2004h> 
+[?2004l[?2004h>     out_h = pd.DataFrame({"pseudo_label": pd.Series(y_h).astype(int)})
+[?2004l[?2004h>     out_h.to_csv("/app/output_heart.csv", index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> if __name__ == "__main__":
+[?2004l[?2004h>     main()
+[?2004l[?2004h> PY
+[?2004l[?2004hroot@613d962e1432:/app# python3 /app/run_cluster.py
+[?2004lBEST diabetes: std_all_numeric_after_binary_gender kmeans {'sil': 0.5566359722336852, 'ch': 1009.4605239653336}
+python3 -c "import pandas as pd; print(pd.read_csv('/app/output_diabetes_data.csv').head()); print(pd.read_csv('/app/output_diabetes_data.csv').shape); print(pd.read_csv('/app/output_heart.csv').head()); print(pd.read_csv('/app/output_heart.csv').shape)"
+/usr/local/lib/python3.13/site-packages/sklearn/manifold/_spectral_embedding.py:329: UserWarning: Graph is not fully connected, spectral embedding may not work as expected.
+  warnings.warn(
+BEST heart: onehot_cat_std_num minibatch {'sil': 0.17300958949509768, 'ch': 213.27284036200507}
+[?2004hroot@613d962e1432:/app# python3 -c "import pandas as pd; print(pd.read_csv('/app/output_diabetes_data.csv').head()); print(pd.read_csv('/app/output_diabetes_data.csv').shape); print(pd.read_csv('/app/output_heart.csv').head()); print(pd.read_csv('/app/output_heart.csv').shape)"
+[?2004lpython3 -c "import pandas as pd; import numpy as np; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('ok unique counts diabetes', np.bincount(d['pseudo_label'])); print('ok unique counts heart', np.bincount(h['pseudo_label']))"
+   pseudo_label
+0             0
+1             1
+2             0
+3             0
+4             1
+(520, 1)
+   pseudo_label
+0             1
+1             0
+2             0
+3             1
+4             0
+(1025, 1)
+[?2004hroot@613d962e1432:/app# python3 -c "import pandas as pd; import numpy as np; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('ok unique counts diabetes', np.bincount(d['pseudo_label'])); print('ok unique counts heart', np.bincount(h['pseudo_label']))"
+[?2004lok unique counts diabetes [313 207]
+ok unique counts heart [427 598]
+[?2004hroot@613d962e1432:/app# ls -la /app/output_diabetes_data.csv /app/output_heart.csv
+[?2004l-rw-r--r-- 1 root root 1053 Jul 30 05:03 /app/output_diabetes_data.csv
+-rw-r--r-- 1 root root 2063 Jul 30 05:03 /app/output_heart.csv
+[?2004hroot@613d962e1432:/app# head -n 5 /app/output_diabetes_data.csv && echo '---' && head -n 5 /app/output_heart.csv
+[?2004lpseudo_label
+0
+1
+0
+0
+---
+pseudo_label
+1
+0
+0
+1
+[?2004hroot@613d962e1432:/app# python3 - <<'PY'
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> for path, n in [("/app/output_diabetes_data.csv", 520), ("/app/output_heart.csv", 1025)]:
+[?2004l[?2004h>     df = pd.read_csv(path)
+[?2004l[?2004h>     assert df.shape == (n, 1), (path, df.shape)
+[?2004l[?2004h>     assert list(df.columns) == ["pseudo_label"], (path, df.columns)
+[?2004l[?2004h>     vals = set(df["pseudo_label"].unique().tolist())
+[?2004l[?2004h>     assert vals.issubset({0,1}), (path, vals)
+[?2004l[?2004h> print('Outputs validated')
+[?2004l[?2004h> PY
+[?2004lOutputs validated
+[?2004hroot@613d962e1432:/app# 

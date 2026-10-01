@@ -1,0 +1,797 @@
+[?2004hroot@3d81a04076cb:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@3d81a04076cb:/app# clear
+[?2004l[H[J[3J[?2004hroot@3d81a04076cb:/app# ls -ლა
+[?2004lls: invalid option -- '�'
+Try 'ls --help' for more information.
+[?2004hroot@3d81a04076cb:/app# find /app -maxdepth 3 -type f | sed -n '1,200p'
+[?2004l/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+/app/.dockerignore
+/app/heart.csv
+/app/diabetes_data.csv
+/app/Dockerfile
+/app/requirements.txt
+[?2004hroot@3d81a04076cb:/app# ls -la /app/src || true
+[?2004ltotal 16
+drwxrwxr-x 4 root root 4096 Jul 25 07:00 .
+drwxr-xr-x 1 root root 4096 Jul 30 04:12 ..
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 cluster
+drwxrwxr-x 2 root root 4096 Jul 24 14:50 transform
+[?2004hroot@3d81a04076cb:/app# find /app/src -maxdepth 4 -type f | sed -n '1,200p'
+[?2004l/app/src/cluster/agglomerative.py
+/app/src/cluster/minibatch_kmeans.py
+/app/src/cluster/birch.py
+/app/src/cluster/gaussian_mixture.py
+/app/src/cluster/kmean.py
+/app/src/cluster/spectral.py
+/app/src/cluster/bisecting_kmeans.py
+/app/src/transform/RobustScaler.py
+/app/src/transform/HashEncoder.py
+/app/src/transform/MaxAbsScaler.py
+/app/src/transform/KBinsDiscretizer.py
+/app/src/transform/FrequencyEncoder.py
+/app/src/transform/CountEncoder.py
+/app/src/transform/StandardScaler.py
+/app/src/transform/OrdinalEncoder.py
+/app/src/transform/OnehotEncoder.py
+/app/src/transform/Normalizer.py
+/app/src/transform/BinaryEncoder.py
+/app/src/transform/PolynomialFeatures.py
+[?2004hroot@3d81a04076cb:/app# python3 -c "import pandas as pd; print('diabetes'); df=pd.read_csv('/app/diabetes_data.csv'); print(df.shape); print(df.dtypes); print(df.head()); print('\nheart'); hf=pd.read_csv('/app/heart.csv'); print(hf.shape); print(hf.dtypes); print(hf.head())"
+[?2004ldiabetes
+(520, 16)
+age                   int64
+gender                  str
+polyuria              int64
+polydipsia            int64
+sudden_weight_loss    int64
+weakness              int64
+polyphagia            int64
+genital_thrush        int64
+visual_blurring       int64
+itching               int64
+irritability          int64
+delayed_healing       int64
+partial_paresis       int64
+muscle_stiffness      int64
+alopecia              int64
+obesity               int64
+dtype: object
+   age gender  polyuria  polydipsia  sudden_weight_loss  weakness  ...  irritability  delayed_healing  partial_paresis  muscle_stiffness  alopecia  obesity
+0   40   Male         0           1                   0         1  ...             0                1                0                 1         1        1
+1   58   Male         0           0                   0         1  ...             0                0                1                 0         1        0
+2   41   Male         1           0                   0         1  ...             0                1                0                 1         1        0
+3   45   Male         0           0                   1         1  ...             0                1                0                 0         0        0
+4   60   Male         1           1                   1         1  ...             1                1                1                 1         1        1
+
+[5 rows x 16 columns]
+
+heart
+(1025, 13)
+age           int64
+sex           int64
+cp            int64
+trestbps      int64
+chol          int64
+fbs           int64
+restecg       int64
+thalach       int64
+exang         int64
+oldpeak     float64
+slope         int64
+ca            int64
+thal          int64
+dtype: object
+   age  sex  cp  trestbps  chol  fbs  restecg  thalach  exang  oldpeak  slope  ca  thal
+0   52    1   0       125   212    0        1      168      0      1.0      2   2     3
+1   53    1   0       140   203    1        0      155      1      3.1      0   0     3
+2   70    1   0       145   174    0        1      125      1      2.6      0   0     3
+3   61    1   0       148   203    0        1      161      0      0.0      2   1     3
+4   62    0   0       138   294    1        1      106      0      1.9      1   3     2
+python3 -c "import pandas as pd; df=pd.read_csv('/app/diabetes_data.csv'); print(df.nunique().sort_values()); hf=pd.read_csv('/app/heart.csv'); print('\nheart nunique'); print(hf.nunique().sort_values())"
+[?2004hroot@3d81a04076cb:/app# python3 -c "import pandas as pd; df=pd.read_csv('/app/diabetes_data.csv'); print(df.nunique().sort_values()); hf=pd.read_csv('/app/heart.csv'); print('\nheart nunique'); print(hf.nunique().sort_values())"
+[?2004lgrep -R "ARI\|NMI\|adjusted_rand\|normalized_mutual" -n /app/src 2>/dev/null | sed -n '1,200p'
+gender                 2
+polyuria               2
+polydipsia             2
+sudden_weight_loss     2
+polyphagia             2
+weakness               2
+genital_thrush         2
+visual_blurring        2
+partial_paresis        2
+itching                2
+irritability           2
+delayed_healing        2
+alopecia               2
+muscle_stiffness       2
+obesity                2
+age                   51
+dtype: int64
+
+heart nunique
+sex           2
+fbs           2
+exang         2
+restecg       3
+slope         3
+thal          4
+cp            4
+ca            5
+oldpeak      40
+age          41
+trestbps     49
+thalach      91
+chol        152
+dtype: int64
+[?2004hroot@3d81a04076cb:/app# grep -R "ARI\|NMI\|adjusted_rand\|normalized_mutual" -n /app/src 2>/dev/null | sed -n '1,200p'
+[?2004l[?2004hroot@3d81a04076cb:/app# grep -R "cluster\|kmeans\|gmm\|mixture\|agglomer" -n /app/src 2>/dev/null | sed -n '1,200p'
+[?2004l/app/src/cluster/agglomerative.py:1:from sklearn.cluster import AgglomerativeClustering
+/app/src/cluster/agglomerative.py:4:def agglomerative(X, k):
+/app/src/cluster/agglomerative.py:6:        n_clusters=k,
+/app/src/cluster/minibatch_kmeans.py:1:from sklearn.cluster import MiniBatchKMeans
+/app/src/cluster/minibatch_kmeans.py:4:def minibatch_kmeans(X, k):
+/app/src/cluster/minibatch_kmeans.py:6:        n_clusters=k,
+/app/src/cluster/birch.py:1:from sklearn.cluster import Birch
+/app/src/cluster/birch.py:6:        n_clusters=k
+/app/src/cluster/gaussian_mixture.py:1:from sklearn.mixture import GaussianMixture
+/app/src/cluster/gaussian_mixture.py:4:def gaussian_mixture(X, k):
+/app/src/cluster/kmean.py:1:from sklearn.cluster import KMeans
+/app/src/cluster/kmean.py:4:def kmeans(X, k):
+/app/src/cluster/kmean.py:6:        n_clusters=k,
+/app/src/cluster/spectral.py:1:from sklearn.cluster import SpectralClustering
+/app/src/cluster/spectral.py:6:        n_clusters=k,
+/app/src/cluster/bisecting_kmeans.py:1:from sklearn.cluster import BisectingKMeans
+/app/src/cluster/bisecting_kmeans.py:4:def bisecting_kmeans(X, k):
+/app/src/cluster/bisecting_kmeans.py:6:        n_clusters=k,
+[?2004hroot@3d81a04076cb:/app# sed -n '1,200p' /app/src/cluster/kmean.py
+[?2004lfrom sklearn.cluster import KMeans
+
+
+def kmeans(X, k):
+    model = KMeans(
+        n_clusters=k,
+        init="k-means++",
+        n_init="auto",
+        random_state=42
+    )
+    return model.fit_predict(X)[?2004hroot@3d81a04076cb:/app# sed -n '1,120p' /app/src/cluster/gaussian_mixture.py
+[?2004lfrom sklearn.mixture import GaussianMixture
+
+
+def gaussian_mixture(X, k):
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="full",
+        random_state=42
+    )
+    return model.fit_predict(X)[?2004hroot@3d81a04076cb:/app# sed -n '1,200p' /app/src/transform/OnehotEncoder.py
+[?2004limport pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+
+
+def one_hot_encoder(df: pd.DataFrame,columns=None,encode_all=False) -> pd.DataFrame:
+
+    result = df.copy()
+    if columns is not None:
+        pass
+
+    elif encode_all:
+        columns = result.columns.tolist()
+    else:
+        columns = result.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
+
+    if len(columns) == 0:
+        return result
+
+    encoder = OneHotEncoder(
+        sparse_output=False,
+        handle_unknown="ignore"
+    )
+
+    encoded = encoder.fit_transform(result[columns])
+
+    encoded_df = pd.DataFrame(
+        encoded,
+        columns=encoder.get_feature_names_out(columns),
+        index=result.index
+    )
+
+    result = result.drop(columns=columns)
+    result = pd.concat([result, encoded_df], axis=1)
+
+    return result[?2004hroot@3d81a04076cb:/app# cat > /app/run_cluster.py <<'PY'
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> 
+[?2004l[?2004h> from sklearn.compose import ColumnTransformer
+[?2004l[?2004h> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+[?2004l[?2004h> from sklearn.pipeline import Pipeline
+[?2004l[?2004h> from sklearn.cluster import KMeans, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.mixture import GaussianMixture
+[?2004l[?2004h> from sklearn.metrics import silhouette_score
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def best_cluster_labels(X, prefer="silhouette"):
+[?2004l[?2004h>     """Try a few clusterers and return labels from the best by silhouette."""
+[?2004l[?2004h>     candidates = []
+[?2004l[?2004h> 
+[?2004l[?2004h>     # KMeans
+[?2004l[?2004h>     for seed in [0, 1, 2, 3, 4, 7, 11, 42]:
+[?2004l[?2004h>         km = KMeans(n_clusters=2, n_init=50, random_state=seed)
+[?2004l[?2004h>         lab = km.fit_predict(X)
+[?2004l[?2004h>         candidates.append(("kmeans", seed, lab))
+[?2004l[?2004h> 
+[?2004l[?2004h>     # GMM
+[?2004l[?2004h>     for seed in [0, 1, 2, 3, 4, 7, 11, 42]:
+[?2004l[?2004h>         gmm = GaussianMixture(n_components=2, covariance_type="full", reg_covar=1e-6, n_init=5, random_state=seed)
+[?2004l[?2004h>         lab = gmm.fit(X).predict(X)
+[?2004l[?2004h>         candidates.append(("gmm", seed, lab))
+[?2004l[?2004h> 
+[?2004l[?2004h>     # Agglomerative (no seed)
+[?2004l[?2004h>     for linkage in ["ward", "complete", "average"]:
+[?2004l[?2004h>         try:
+[?2004l[?2004h>             agg = AgglomerativeClustering(n_clusters=2, linkage=linkage)
+[?2004l[?2004h>             lab = agg.fit_predict(X)
+[?2004l[?2004h>             candidates.append((f"agg_{linkage}", None, lab))
+[?2004l[?2004h>         except Exception:
+[?2004l[?2004h>             pass
+[?2004l[?2004h> 
+[?2004l[?2004h>     best = None
+[?2004l[?2004h>     best_score = -1e9
+[?2004l[?2004h> 
+[?2004l[?2004h>     for name, seed, lab in candidates:
+[?2004l[?2004h>         # silhouette requires >1 label
+[?2004l[?2004h>         if len(np.unique(lab)) < 2:
+[?2004l[?2004h>             continue
+[?2004l[?2004h>         try:
+[?2004l[?2004h>             sc = silhouette_score(X, lab, metric="euclidean")
+[?2004l[?2004h>         except Exception:
+[?2004l[?2004h>             continue
+[?2004l[?2004h>         if sc > best_score:
+[?2004l[?2004h>             best_score = sc
+[?2004l[?2004h>             best = (name, seed, lab)
+[?2004l[?2004h> 
+[?2004l[?2004h>     if best is None:
+[?2004l[?2004h>         # fallback: first candidate
+[?2004l[?2004h>         return candidates[0][2]
+[?2004l[?2004h> 
+[?2004l[?2004h>     return best[2]
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_diabetes(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h> 
+[?2004l[?2004h>     cat_cols = [c for c in df.columns if c != "age"]
+[?2004l[?2004h>     num_cols = ["age"]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ("num", StandardScaler(), num_cols),
+[?2004l[?2004h>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder="drop",
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h>     labels = best_cluster_labels(X)
+[?2004l[?2004h> 
+[?2004l[?2004h>     out = pd.DataFrame({"pseudo_label": labels.astype(int)})
+[?2004l[?2004h>     out.to_csv(out_path, index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_heart(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h> 
+[?2004l[?2004h>     cat_cols = ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "thal"]
+[?2004l[?2004h>     num_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ("num", StandardScaler(), num_cols),
+[?2004l[?2004h>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder="drop",
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h>     labels = best_cluster_labels(X)
+[?2004l[?2004h> 
+[?2004l[?2004h>     out = pd.DataFrame({"pseudo_label": labels.astype(int)})
+[?2004l[?2004h>     out.to_csv(out_path, index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> if __name__ == "__main__":
+[?2004l[?2004h>     cluster_diabetes("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+[?2004l[?2004h>     cluster_heart("/app/heart.csv", "/app/output_heart.csv")
+[?2004l[?2004h>     print("Wrote /app/output_diabetes_data.csv and /app/output_heart.csv")
+[?2004l[?2004h> PY
+[?2004l[?2004hroot@3d81a04076cb:/app# python3 /app/run_cluster.py
+[?2004lpython3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print(d.head()); print(d['pseudo_label'].value_counts()); print(h.head()); print(h['pseudo_label'].value_counts());"
+python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok');"
+^CTraceback (most recent call last):
+  File [35m"/app/run_cluster.py"[0m, line [35m102[0m, in [35m<module>[0m
+    [31mcluster_diabetes[0m[1;31m("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")[0m
+    [31m~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  File [35m"/app/run_cluster.py"[0m, line [35m74[0m, in [35mcluster_diabetes[0m
+    labels = best_cluster_labels(X)
+  File [35m"/app/run_cluster.py"[0m, line [35m25[0m, in [35mbest_cluster_labels[0m
+    lab = [31mgmm.fit[0m[1;31m(X)[0m.predict(X)
+          [31m~~~~~~~[0m[1;31m^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/mixture/_base.py"[0m, line [35m180[0m, in [35mfit[0m
+    [31mself.fit_predict[0m[1;31m(X, y)[0m
+    [31m~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/base.py"[0m, line [35m1389[0m, in [35mwrapper[0m
+    return fit_method(estimator, *args, **kwargs)
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/mixture/_base.py"[0m, line [35m234[0m, in [35mfit_predict[0m
+    [31mself._initialize_parameters[0m[1;31m(X, random_state)[0m
+    [31m~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/mixture/_gaussian_mixture.py"[0m, line [35m765[0m, in [35m_initialize_parameters[0m
+    [31msuper()._initialize_parameters[0m[1;31m(X, random_state)[0m
+    [31m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/mixture/_base.py"[0m, line [35m117[0m, in [35m_initialize_parameters[0m
+    .[31mfit[0m[1;31m(X)[0m
+     [31m~~~[0m[1;31m^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/base.py"[0m, line [35m1389[0m, in [35mwrapper[0m
+    return fit_method(estimator, *args, **kwargs)
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py"[0m, line [35m1510[0m, in [35mfit[0m
+    labels, inertia, centers, n_iter_ = [31mkmeans_single[0m[1;31m([0m
+                                        [31m~~~~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mX,[0m
+        [1;31m^^[0m
+    ...<5 lines>...
+        [1;31mn_threads=self._n_threads,[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/utils/parallel.py"[0m, line [35m165[0m, in [35mwrapper[0m
+    return func(*args, **kwargs)
+  File [35m"/usr/local/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py"[0m, line [35m700[0m, in [35m_kmeans_single_lloyd[0m
+    [31mlloyd_iter[0m[1;31m([0m
+    [31m~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mX,[0m
+        [1;31m^^[0m
+    ...<6 lines>...
+        [1;31mn_threads,[0m
+        [1;31m^^^^^^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+  File [35m"_k_means_lloyd.pyx"[0m, line [35m160[0m, in [35msklearn.cluster._k_means_lloyd.lloyd_iter_chunked_dense[0m
+  File [35m"_k_means_common.pyx"[0m, line [35m177[0m, in [35msklearn.cluster._k_means_common._relocate_empty_clusters_dense[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/numpy/_core/multiarray.py"[0m, line [35m383[0m, in [35mwhere[0m
+    @array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
+    
+[1;35mKeyboardInterrupt[0m
+ls -la /app/output_diabetes_data.csv /app/output_heart.csv || true
+head -n 5 /app/output_diabetes_data.csv; echo '---'; head -n 5 /app/output_heart.csv
+
+[?2004hroot@3d81a04076cb:/app# ls -la /app/output_diabetes_data.csv /app/output_heart.csv || true
+[?2004lls: cannot access '/app/output_diabetes_data.csv': No such file or directory
+ls: cannot access '/app/output_heart.csv': No such file or directory
+[?2004hroot@3d81a04076cb:/app# head -n 5 /app/output_diabetes_data.csv; echo '---'; head -n 5 /app/output_heart.csv
+[?2004lhead: cannot open '/app/output_diabetes_data.csv' for reading: No such file or directory
+---
+head: cannot open '/app/output_heart.csv' for reading: No such file or directory
+[?2004hroot@3d81a04076cb:/app# python3 -c "import pandas as pd; import os; 
+[?2004l[?2004h> for p in ['/app/output_diabetes_data.csv','/app/output_heart.csv']:
+[?2004l[?2004h>     print('\n',p, 'exists=',os.path.exists(p))
+[?2004l[?2004h>     df=pd.read_csv(p)
+[?2004l[?2004h>     print(df.head())
+[?2004l[?2004h>     print('cols',df.columns.tolist())
+[?2004l[?2004h>     print('unique',sorted(df['pseudo_label'].unique().tolist()))
+[?2004l[?2004h>     print(df['pseudo_label'].value_counts())
+[?2004l[?2004h> "
+[?2004l
+ /app/output_diabetes_data.csv exists= False
+Traceback (most recent call last):
+  File [35m"<string>"[0m, line [35m4[0m, in [35m<module>[0m
+    df=pd.read_csv(p)
+  File [35m"/usr/local/lib/python3.13/site-packages/pandas/io/parsers/readers.py"[0m, line [35m873[0m, in [35mread_csv[0m
+    return _read(filepath_or_buffer, kwds)
+  File [35m"/usr/local/lib/python3.13/site-packages/pandas/io/parsers/readers.py"[0m, line [35m300[0m, in [35m_read[0m
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File [35m"/usr/local/lib/python3.13/site-packages/pandas/io/parsers/readers.py"[0m, line [35m1645[0m, in [35m__init__[0m
+    self._engine = [31mself._make_engine[0m[1;31m(f, self.engine)[0m
+                   [31m~~~~~~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/pandas/io/parsers/readers.py"[0m, line [35m1904[0m, in [35m_make_engine[0m
+    self.handles = [31mget_handle[0m[1;31m([0m
+                   [31m~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mf,[0m
+        [1;31m^^[0m
+    ...<6 lines>...
+        [1;31mstorage_options=self.options.get("storage_options", None),[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+  File [35m"/usr/local/lib/python3.13/site-packages/pandas/io/common.py"[0m, line [35m930[0m, in [35mget_handle[0m
+    handle = open(
+        handle,
+    ...<3 lines>...
+        newline="",
+    )
+[1;35mFileNotFoundError[0m: [35m[Errno 2] No such file or directory: '/app/output_diabetes_data.csv'[0m
+[?2004hroot@3d81a04076cb:/app# cat > /app/run_cluster.py <<'PY'
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> 
+[?2004l[?2004h> from sklearn.compose import ColumnTransformer
+[?2004l[?2004h> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+[?2004l[?2004h> from sklearn.cluster import KMeans, AgglomerativeClustering
+[?2004l[?2004h> from sklearn.metrics import silhouette_score
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def best_cluster_labels(X):
+[?2004l[?2004h>     """Try a few clusterers and return labels from the best by silhouette."""
+[?2004l[?2004h>     candidates = []
+[?2004l[?2004h> 
+[?2004l[?2004h>     # KMeans (fast + strong baseline)
+[?2004l[?2004h>     for seed in [0, 1, 2, 3, 4, 7, 11, 42]:
+[?2004l[?2004h>         km = KMeans(n_clusters=2, n_init=50, random_state=seed)
+[?2004l[?2004h>         lab = km.fit_predict(X)
+[?2004l[?2004h>         candidates.append((f"kmeans_{seed}", lab))
+[?2004l[?2004h> 
+[?2004l[?2004h>     # Agglomerative (can help on some encodings)
+[?2004l[?2004h>     for linkage in ["ward", "complete", "average"]:
+[?2004l[?2004h>         try:
+[?2004l[?2004h>             agg = AgglomerativeClustering(n_clusters=2, linkage=linkage)
+[?2004l[?2004h>             lab = agg.fit_predict(X)
+[?2004l[?2004h>             candidates.append((f"agg_{linkage}", lab))
+[?2004l[?2004h>         except Exception:
+[?2004l[?2004h>             pass
+[?2004l[?2004h> 
+[?2004l[?2004h>     best_lab = None
+[?2004l[?2004h>     best_score = -1e9
+[?2004l[?2004h>     for name, lab in candidates:
+[?2004l[?2004h>         if len(np.unique(lab)) < 2:
+[?2004l[?2004h>             continue
+[?2004l[?2004h>         try:
+[?2004l[?2004h>             sc = silhouette_score(X, lab, metric="euclidean")
+[?2004l[?2004h>         except Exception:
+[?2004l[?2004h>             continue
+[?2004l[?2004h>         if sc > best_score:
+[?2004l[?2004h>             best_score = sc
+[?2004l[?2004h>             best_lab = lab
+[?2004l[?2004h> 
+[?2004l[?2004h>     if best_lab is None:
+[?2004l[?2004h>         return candidates[0][1]
+[?2004l[?2004h>     return best_lab
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_diabetes(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h> 
+[?2004l[?2004h>     cat_cols = [c for c in df.columns if c != "age"]
+[?2004l[?2004h>     num_cols = ["age"]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ("num", StandardScaler(), num_cols),
+[?2004l[?2004h>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder="drop",
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h>     labels = best_cluster_labels(X)
+[?2004l[?2004h>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_heart(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h> 
+[?2004l[?2004h>     cat_cols = ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "thal"]
+[?2004l[?2004h>     num_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ("num", StandardScaler(), num_cols),
+[?2004l[?2004h>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder="drop",
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h>     labels = best_cluster_labels(X)
+[?2004l[?2004h>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> if __name__ == "__main__":
+[?2004l[?2004h>     cluster_diabetes("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+[?2004l[?2004h>     cluster_heart("/app/heart.csv", "/app/output_heart.csv")
+[?2004l[?2004h>     print("Wrote /app/output_diabetes_data.csv and /app/output_heart.csv")
+[?2004l[?2004h> PY
+[?2004l[?2004hroot@3d81a04076cb:/app# python3 /app/run_cluster.py
+[?2004lls -la /app/output_diabetes_data.csv /app/output_heart.csv
+python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes counts:\n',d['pseudo_label'].value_counts()); print('heart counts:\n',h['pseudo_label'].value_counts()); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok')"
+C-c
+Wrote /app/output_diabetes_data.csv and /app/output_heart.csv
+cat > /app/run_cluster.py <<'PY'
+import numpy as np
+import pandas as pd
+
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.cluster import KMeans
+
+
+def kmeans_best_inertia(X, seeds=(0, 1, 2, 3, 4, 7, 11, 42)):
+    best_lab = None
+    best_inertia = np.inf
+    for seed in seeds:
+        km = KMeans(n_clusters=2, n_init=50, random_state=seed)
+        lab = km.fit_predict(X)
+        if km.inertia_ < best_inertia:
+            best_inertia = km.inertia_
+            best_lab = lab
+    return best_lab
+
+
+def cluster_diabetes(in_path, out_path):
+    df = pd.read_csv(in_path)
+    cat_cols = [c for c in df.columns if c != "age"]
+    num_cols = ["age"]
+
+    pre = ColumnTransformer(
+        transformers=[
+            ("num", StandardScaler(), num_cols),
+            ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+        ],
+        remainder="drop",
+    )
+
+    X = pre.fit_transform(df)
+    labels = kmeans_best_inertia(X)
+    pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+
+
+def cluster_heart(in_path, out_path):
+    df = pd.read_csv(in_path)
+
+    cat_cols = ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "thal"]
+    num_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
+
+    pre = ColumnTransformer(
+        transformers=[
+            ("num", StandardScaler(), num_cols),
+            ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+        ],
+        remainder="drop",
+    )
+
+    X = pre.fit_transform(df)
+    labels = kmeans_best_inertia(X)
+    pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+
+
+if __name__ == "__main__":
+    cluster_diabetes("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+    cluster_heart("/app/heart.csv", "/app/output_heart.csv")
+    print("Wrote /app/output_diabetes_data.csv and /app/output_heart.csv")
+PY
+python3 /app/run_cluster.py
+[?2004hroot@3d81a04076cb:/app# ls -la /app/output_diabetes_data.csv /app/output_heart.csv
+[?2004l-rw-r--r-- 1 root root 1053 Jul 30 05:02 /app/output_diabetes_data.csv
+-rw-r--r-- 1 root root 2063 Jul 30 05:02 /app/output_heart.csv
+[?2004hroot@3d81a04076cb:/app# python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes counts:\n',d['pseudo_label'].value_counts()); print('heart counts:\n',h['pseudo_label'].value_counts()); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok')"
+[?2004ldiabetes counts:
+ pseudo_label
+0    518
+1      2
+Name: count, dtype: int64
+heart counts:
+ pseudo_label
+0    1022
+1       3
+Name: count, dtype: int64
+format ok
+[?2004hroot@3d81a04076cb:/app# C-c
+[?2004lbash: C-c: command not found
+[?2004hroot@3d81a04076cb:/app# cat > /app/run_cluster.py <<'PY'
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> 
+[?2004l[?2004h> from sklearn.compose import ColumnTransformer
+[?2004l[?2004h> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+[?2004l[?2004h> from sklearn.cluster import KMeans
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def kmeans_best_inertia(X, seeds=(0, 1, 2, 3, 4, 7, 11, 42)):
+[?2004l[?2004h>     best_lab = None
+[?2004l[?2004h>     best_inertia = np.inf
+[?2004l[?2004h>     for seed in seeds:
+[?2004l[?2004h>         km = KMeans(n_clusters=2, n_init=50, random_state=seed)
+[?2004l[?2004h>         lab = km.fit_predict(X)
+[?2004l[?2004h>         if km.inertia_ < best_inertia:
+[?2004l[?2004h>             best_inertia = km.inertia_
+[?2004l[?2004h>             best_lab = lab
+[?2004l[?2004h>     return best_lab
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_diabetes(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h>     cat_cols = [c for c in df.columns if c != "age"]
+[?2004l[?2004h>     num_cols = ["age"]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ("num", StandardScaler(), num_cols),
+[?2004l[?2004h>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder="drop",
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h>     labels = kmeans_best_inertia(X)
+[?2004l[?2004h>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_heart(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h> 
+[?2004l[?2004h>     cat_cols = ["sex", "cp", "fbs", "restecg", "exang", "slope", "ca", "thal"]
+[?2004l[?2004h>     num_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ("num", StandardScaler(), num_cols),
+[?2004l[?2004h>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder="drop",
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h>     labels = kmeans_best_inertia(X)
+[?2004l[?2004h>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> if __name__ == "__main__":
+[?2004l[?2004h>     cluster_diabetes("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+[?2004l[?2004h>     cluster_heart("/app/heart.csv", "/app/output_heart.csv")
+[?2004l[?2004h>     print("Wrote /app/output_diabetes_data.csv and /app/output_heart.csv")
+[?2004l[?2004h> PY
+[?2004l[?2004hroot@3d81a04076cb:/app# python3 /app/run_cluster.py
+[?2004lls -la /app/output_diabetes_data.csv /app/output_heart.csv
+python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes counts:', d['pseudo_label'].value_counts().to_dict()); print('heart counts:', h['pseudo_label'].value_counts().to_dict()); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok')"
+Wrote /app/output_diabetes_data.csv and /app/output_heart.csv
+[?2004hroot@3d81a04076cb:/app# ls -la /app/output_diabetes_data.csv /app/output_heart.csv
+[?2004l-rw-r--r-- 1 root root 1053 Jul 30 05:02 /app/output_diabetes_data.csv
+-rw-r--r-- 1 root root 2063 Jul 30 05:02 /app/output_heart.csv
+[?2004hroot@3d81a04076cb:/app# python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes counts:', d['pseudo_label'].value_counts().to_dict()); print('heart counts:', h['pseudo_label'].value_counts().to_dict()); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1}); print('format ok')"
+[?2004ldiabetes counts: {0: 274, 1: 246}
+heart counts: {1: 560, 0: 465}
+format ok
+[?2004hroot@3d81a04076cb:/app# cat > /app/run_cluster.py <<'PY'
+[?2004l[?2004h> import numpy as np
+[?2004l[?2004h> import pandas as pd
+[?2004l[?2004h> 
+[?2004l[?2004h> from sklearn.compose import ColumnTransformer
+[?2004l[?2004h> from sklearn.preprocessing import OneHotEncoder, StandardScaler
+[?2004l[?2004h> from sklearn.decomposition import PCA
+[?2004l[?2004h> from sklearn.cluster import KMeans
+[?2004l[?2004h> from sklearn.metrics import silhouette_score
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def select_kmeans(X, seeds=(0, 1, 2, 3, 4, 7, 11, 42, 101, 202), min_prop=0.1):
+[?2004l[?2004h>     """Pick KMeans run by silhouette on PCA space with a penalty for tiny clusters."""
+[?2004l[?2004h>     # PCA for speed/stability in silhouette computation
+[?2004l[?2004h>     n_comp = int(min(10, X.shape[1]))
+[?2004l[?2004h>     Z = PCA(n_components=n_comp, random_state=0).fit_transform(X)
+[?2004l[?2004h> 
+[?2004l[?2004h>     best = None
+[?2004l[?2004h>     best_score = -1e9
+[?2004l[?2004h> 
+[?2004l[?2004h>     for seed in seeds:
+[?2004l[?2004h>         km = KMeans(n_clusters=2, n_init=50, random_state=seed)
+[?2004l[?2004h>         lab = km.fit_predict(X)
+[?2004l[?2004h> 
+[?2004l[?2004h>         # balance penalty
+[?2004l[?2004h>         counts = np.bincount(lab, minlength=2)
+[?2004l[?2004h>         props = counts / counts.sum()
+[?2004l[?2004h>         small = props.min()
+[?2004l[?2004h>         penalty = 0.0
+[?2004l[?2004h>         if small < min_prop:
+[?2004l[?2004h>             penalty = (min_prop - small) * 5.0  # strong penalty
+[?2004l[?2004h> 
+[?2004l[?2004h>         # silhouette on reduced space
+[?2004l[?2004h>         if len(np.unique(lab)) < 2:
+[?2004l[?2004h>             continue
+[?2004l[?2004h>         sil = silhouette_score(Z, lab)
+[?2004l[?2004h>         score = sil - penalty
+[?2004l[?2004h> 
+[?2004l[?2004h>         if score > best_score:
+[?2004l[?2004h>             best_score = score
+[?2004l[?2004h>             best = lab
+[?2004l[?2004h> 
+[?2004l[?2004h>     return best
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_diabetes(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h> 
+[?2004l[?2004h>     # Encode gender to 0/1, keep all other binary columns numeric
+[?2004l[?2004h>     df = df.copy()
+[?2004l[?2004h>     df["gender"] = df["gender"].map({"Female": 0, "Male": 1}).astype(int)
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = StandardScaler().fit_transform(df.values)
+[?2004l[?2004h>     labels = select_kmeans(X, min_prop=0.15)
+[?2004l[?2004h> 
+[?2004l[?2004h>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> def cluster_heart(in_path, out_path):
+[?2004l[?2004h>     df = pd.read_csv(in_path)
+[?2004l[?2004h> 
+[?2004l[?2004h>     # Binary treated as numeric; multi-class categoricals one-hot
+[?2004l[?2004h>     bin_cols = ["sex", "fbs", "exang"]
+[?2004l[?2004h>     multi_cat = ["cp", "restecg", "slope", "ca", "thal"]
+[?2004l[?2004h>     num_cols = ["age", "trestbps", "chol", "thalach", "oldpeak"]
+[?2004l[?2004h> 
+[?2004l[?2004h>     pre = ColumnTransformer(
+[?2004l[?2004h>         transformers=[
+[?2004l[?2004h>             ("num", StandardScaler(), num_cols + bin_cols),
+[?2004l[?2004h>             ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), multi_cat),
+[?2004l[?2004h>         ],
+[?2004l[?2004h>         remainder="drop",
+[?2004l[?2004h>     )
+[?2004l[?2004h> 
+[?2004l[?2004h>     X = pre.fit_transform(df)
+[?2004l[?2004h>     labels = select_kmeans(X, min_prop=0.15)
+[?2004l[?2004h> 
+[?2004l[?2004h>     pd.DataFrame({"pseudo_label": labels.astype(int)}).to_csv(out_path, index=False)
+[?2004l[?2004h> 
+[?2004l[?2004h> 
+[?2004l[?2004h> if __name__ == "__main__":
+[?2004l[?2004h>     cluster_diabetes("/app/diabetes_data.csv", "/app/output_diabetes_data.csv")
+[?2004l[?2004h>     cluster_heart("/app/heart.csv", "/app/output_heart.csv")
+[?2004l[?2004h>     print("Wrote /app/output_diabetes_data.csv and /app/output_heart.csv")
+[?2004l[?2004h> PY
+[?2004l[?2004hroot@3d81a04076cb:/app# python3 /app/run_cluster.py
+[?2004lpython3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes counts:', d['pseudo_label'].value_counts().to_dict()); print('heart counts:', h['pseudo_label'].value_counts().to_dict()); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1});"
+Wrote /app/output_diabetes_data.csv and /app/output_heart.csv
+[?2004hroot@3d81a04076cb:/app# python3 -c "import pandas as pd; d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv'); print('diabetes counts:', d['pseudo_label'].value_counts().to_dict()); print('heart counts:', h['pseudo_label'].value_counts().to_dict()); assert list(d.columns)==['pseudo_label']; assert list(h.columns)==['pseudo_label']; assert set(d['pseudo_label'].unique()).issubset({0,1}); assert set(h['pseudo_label'].unique()).issubset({0,1});" M[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[K"
+[?2004ldiabetes counts: {0: 278, 1: 242}
+heart counts: {0: 569, 1: 456}
+[?2004hroot@3d81a04076cb:/app# ls -la /app/output_diabetes_data.csv /app/output_heart.csv
+[?2004l-rw-r--r-- 1 root root 1053 Jul 30 05:02 /app/output_diabetes_data.csv
+-rw-r--r-- 1 root root 2063 Jul 30 05:02 /app/output_heart.csv
+[?2004hroot@3d81a04076cb:/app# head -n 3 /app/output_diabetes_data.csv; echo '---'; head -n 3 /app/output_heart.csv
+[?2004lpseudo_label
+0
+0
+---
+pseudo_label
+0
+1
+[?2004hroot@3d81a04076cb:/app# python3 -c "import pandas as pd; 
+[?2004l[?2004h> d=pd.read_csv('/app/output_diabetes_data.csv'); h=pd.read_csv('/app/output_heart.csv');
+[?2004l[?2004h> assert d.columns.tolist()==['pseudo_label'] and h.columns.tolist()==['pseudo_label'];
+[?2004l[?2004h> assert set(d['pseudo_label'].unique()).issubset({0,1});
+[?2004l[?2004h> assert set(h['pseudo_label'].unique()).issubset({0,1});
+[?2004l[?2004h> print('diabetes', d.shape, d['pseudo_label'].value_counts().to_dict());
+[?2004l[?2004h> print('heart', h.shape, h['pseudo_label'].value_counts().to_dict());
+[?2004l[?2004h> print('outputs ok')"
+[?2004ldiabetes (520, 1) {0: 278, 1: 242}
+heart (1025, 1) {0: 569, 1: 456}
+outputs ok
+[?2004hroot@3d81a04076cb:/app# 

@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.12, pytest-9.1.1, pluggy-1.6.0
+rootdir: /tests
+plugins: json-ctrf-0.5.2
+collected 6 items
+
+../tests/test_outputs.py ......                                          [100%]
+
+==================================== PASSES ====================================
+___________________________ test_clustering_metrics ____________________________
+----------------------------- Captured stdout call -----------------------------
+diabetes_data -> ARI=0.5440 | NMI=0.4379
+heart -> ARI=0.3570 | NMI=0.2916
+=========================== short test summary info ============================
+PASSED ../tests/test_outputs.py::test_clustering_metrics
+PASSED ../tests/test_outputs.py::test_row_count_matches_input
+PASSED ../tests/test_outputs.py::test_both_clusters_present
+PASSED ../tests/test_outputs.py::test_output_single_column
+PASSED ../tests/test_outputs.py::test_output_file_name
+PASSED ../tests/test_outputs.py::test_output_column_name
+============================== 6 passed in 5.66s ===============================

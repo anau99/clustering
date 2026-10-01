@@ -1,0 +1,20 @@
+New Terminal Output:
+
+  key_kmeans: [411 614]
+  key_gmm_full: [443 582]
+  key_gmm_diag: [517 508]
+  key_agg_ward: [701 324]
+
+--- Weighted ordinal features ---
+  weighted_kmeans: [378 647]
+  weighted_gmm_full: [345 680]
+  weighted_gmm_tied: [345 680]
+  weighted_agg_ward: [724 301]
+
+
+=== SAVING BEST RESULTS ===
+Diabetes final: [200 320]
+Heart final: [378 647]
+
+Done! Files saved.
+root@e123fae6e01b:/app#

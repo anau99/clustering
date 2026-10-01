@@ -1,0 +1,26 @@
+New Terminal Output:
+
+pyyaml==6.0.2root@e123fae6e01b:/app# cat /app/src/cluster/spectral.py
+from sklearn.cluster import SpectralClustering
+
+
+def spectral(X, k):
+    model = SpectralClustering(
+        n_clusters=k,
+        affinity="nearest_neighbors",
+        random_state=42
+    )
+    return model.fit_predict(X)root@e123fae6e01b:/app# cat /app/src/cluster/agglomerative.py
+from sklearn.cluster import AgglomerativeClustering
+
+
+def agglomerative(X, k):
+    model = AgglomerativeClustering(
+        n_clusters=k,
+        linkage="ward"
+    )
+    return model.fit_predict(X)root@e123fae6e01b:/app# wc -l /app/diabetes_data.csv /app/heart.csv
+  521 /app/diabetes_data.csv
+ 1026 /app/heart.csv
+ 1547 total
+root@e123fae6e01b:/app#

@@ -1,0 +1,7 @@
+scikit-learn==1.6.1
+torch==2.9.1
+pandas==3.0.3
+pytest==9.1.1
+pytest-json-ctrf==0.5.2
+numpy==2.2.6
+pyyaml==6.0.2

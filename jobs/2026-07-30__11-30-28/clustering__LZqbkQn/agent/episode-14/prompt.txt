@@ -1,0 +1,26 @@
+New Terminal Output:
+
+root@e123fae6e01b:/app# sed -i 's/score_reshaped = score.reshape(-1, 1)/score_reshaped = np.array(score).reshape(-1, 1)/' /app/final2.py
+root@e123fae6e01b:/app# python /app/final2.py
+HEART - detailed analysis
+
+Candidate evaluation (using multiple disease indicators):
+Name                 Counts          ca_sep   thal_sep   exang_sep  combined
+  key_ohe_km           [455 570]       0.689    0.579      0.780      0.682
+  weighted_km          [375 650]       0.626    0.622      0.765      0.671
+  aggr_wt_km           [393 632]       0.622    0.625      0.829      0.692
+  score_median         [508 517]       0.821    0.502      0.913      0.745
+  score_km             [365 660]       0.678    0.647      0.707      0.677
+  combo_km             [382 643]       0.678    0.629      0.736      0.681
+
+DIABETES validation
+Diabetes counts: [247 273]
+  Polyuria+Polydipsia patients in cluster 0: 0, cluster 1: 193
+  Neither in cluster 0: 222, cluster 1: 0
+
+=== FINAL SAVE ===
+Diabetes: [247 273]
+Best heart approach: score_median
+Heart: [508 517]
+Done!
+root@e123fae6e01b:/app#

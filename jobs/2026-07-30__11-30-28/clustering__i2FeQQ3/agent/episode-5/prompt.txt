@@ -1,0 +1,22 @@
+New Terminal Output:
+
+Processing heart dataset...
+/usr/local/lib/python3.13/site-packages/sklearn/manifold/_spectral_embedding.py:329: UserWarning: Graph is not fully connected, spectral embedding may not work
+as expected.
+  warnings.warn(
+
+Heart cluster sizes:
+  kmeans_onehot: {np.int32(0): np.int64(619), np.int32(1): np.int64(406)}
+  gmm_onehot: {np.int64(0): np.int64(197), np.int64(1): np.int64(828)}
+  agg_onehot: {np.int64(0): np.int64(481), np.int64(1): np.int64(544)}
+  kmeans_allscaled: {np.int32(0): np.int64(653), np.int32(1): np.int64(372)}
+  gmm_allscaled: {np.int64(0): np.int64(423), np.int64(1): np.int64(602)}
+  kmeans_weighted: {np.int32(0): np.int64(384), np.int32(1): np.int64(641)}
+  gmm_weighted: {np.int64(0): np.int64(497), np.int64(1): np.int64(528)}
+  kmeans_pca: {np.int32(0): np.int64(402), np.int32(1): np.int64(623)}
+  spectral: {np.int32(0): np.int64(1014), np.int32(1): np.int64(11)}
+
+Saved heart results. Cluster distribution: [497 528]
+
+Done!
+root@e8904edca287:/app#

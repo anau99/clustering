@@ -1,0 +1,166 @@
+New Terminal Output:
+
+root@e123fae6e01b:/app# cat > /app/final2.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+> from sklearn.cluster import KMeans
+> from sklearn.mixture import GaussianMixture
+>
+> # ============ HEART - more detailed analysis ============
+> print("HEART - detailed analysis")
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> # Create multiple candidate clusterings
+> candidates = {}
+>
+> # Approach 1: Key features OHE
+> key_heart = ['cp', 'thal', 'ca', 'oldpeak', 'thalach', 'exang', 'slope', 'sex', 'age']
+> df_ha = df_heart[key_heart].copy()
+> enc = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+> encoded = enc.fit_transform(df_ha[['cp', 'thal', 'slope']])
+> encoded_df = pd.DataFrame(encoded, columns=enc.get_feature_names_out(['cp', 'thal', 'slope']), index=df_ha.index)
+> df_ha2 = df_ha.drop(columns=['cp', 'thal', 'slope'])
+> df_ha2 = pd.concat([df_ha2, encoded_df], axis=1)
+> df_ha2[['oldpeak', 'thalach', 'age']] = StandardScaler().fit_transform(df_ha2[['oldpeak', 'thalach', 'age']])
+> candidates['key_ohe_km'] = KMeans(n_clusters=2, n_init=20, random_state=42).fit_predict(df_ha2.values)
+>
+> # Approach 2: Weighted ordinal
+> X_h = StandardScaler().fit_transform(df_heart.values)
+> weights = np.array([1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.5, 2.0, 2.0, 1.5, 2.5, 2.5])
+> candidates['weighted_km'] = KMeans(n_clusters=2, n_init=20, random_state=42).fit_predict(X_h * weights)
+>
+> # Approach 3: Aggressive weighted ordinal
+> weights2 = np.array([0.5, 1.0, 3.0, 0.5, 0.5, 0.5, 0.5, 2.0, 2.5, 2.5, 2.0, 3.0, 3.0])
+> candidates['aggr_wt_km'] = KMeans(n_clusters=2, n_init=20, random_state=42).fit_predict(X_h * weights2)
+>
+um()}")
+
+# ============ SAVE FINAL ============
+print("\n==> # Approach 4: Create a "disease score" and cluster on it
+> # Heart disease indicators (higher = more likely disease):
+> # cp: 0 is typical angina (disease), 1,2,3 are less typical
+> # thal: 2 (reversible defect) = disease, 3 = fixed defect = disease, 1 = normal
+> # ca: higher = more vessels blocked = disease
+> # exang: 1 = exercise angina = disease
+> # oldpeak: higher = more ST depression = disease
+> # slope: 0 (downsloping) might indicate disease, 2 (upsloping) = normal
+> # thalach: lower max heart rate = disease
+> # sex: 1 (male) = higher risk
+>
+> # Score approach
+> df_score = df_heart.copy()
+> score = np.zeros(len(df_score))
+> score += (df_score['cp'] == 0).astype(float) * 2  # typical angina
+> score += (df_score['thal'] >= 2).astype(float) * 2  # defect
+> score += df_score['ca'] * 1.5  # num vessels
+> score += df_score['exang'] * 1.5  # exercise angina
+> score += df_score['oldpeak'] * 0.5  # ST depression
+> score += (df_score['slope'] == 0).astype(float)  # downsloping
+> score -= df_score['thalach'] / 100  # lower thalach = disease
+> score += df_score['sex'] * 0.5  # male risk
+> score += df_score['age'] / 100  # older = more risk
+>
+> # Cluster on score
+> from sklearn.cluster import KMeans as KM
+> threshold = np.median(score)
+> candidates['score_median'] = (score >= threshold).astype(int)
+>
+> # KMeans on score
+> score_reshaped = score.reshape(-1, 1)
+> candidates['score_km'] = KMeans(n_clusters=2, n_init=20, random_state=42).fit_predict(score_reshaped)
+>
+> # Also use score + other features
+> df_combo = df_heart.copy()
+> df_combo['disease_score'] = score
+> X_combo = StandardScaler().fit_transform(df_combo.values)
+> # Weight the score heavily
+> combo_weights = np.ones(X_combo.shape[1])
+> combo_weights[-1] = 3.0  # disease score gets 3x weight
+> candidates['combo_km'] = KMeans(n_clusters=2, n_init=20, random_state=42).fit_predict(X_combo * combo_weights)
+>
+> # Evaluate all candidates
+> print("\nCandidate evaluation (using multiple disease indicators):")
+> print(f"{'Name':<20} {'Counts':<15} {'ca_sep':<8} {'thal_sep':<10} {'exang_sep':<10} {'combined':<10}")
+>
+> for name, labels in candidates.items():
+>     counts = np.bincount(labels)
+>
+>     # ca separation
+>     ca_pos = df_heart['ca'] > 0
+>     ca_in_0 = ((labels == 0) & ca_pos).sum()
+>     ca_in_1 = ((labels == 1) & ca_pos).sum()
+>     ca_sep = max(ca_in_0, ca_in_1) / ca_pos.sum()
+>
+>     # thal separation (thal >= 2 = defect)
+>     thal_pos = df_heart['thal'] >= 2
+>     thal_in_0 = ((labels == 0) & thal_pos).sum()
+>     thal_in_1 = ((labels == 1) & thal_pos).sum()
+>     thal_sep = max(thal_in_0, thal_in_1) / thal_pos.sum()
+>
+>     # exang separation
+>     exang_pos = df_heart['exang'] == 1
+>     exang_in_0 = ((labels == 0) & exang_pos).sum()
+>     exang_in_1 = ((labels == 1) & exang_pos).sum()
+>     exang_sep = max(exang_in_0, exang_in_1) / exang_pos.sum()
+>
+>     combined = (ca_sep + thal_sep + exang_sep) / 3
+>     print(f"  {name:<20} {str(counts):<15} {ca_sep:<8.3f} {thal_sep:<10.3f} {exang_sep:<10.3f} {combined:<10.3f}")
+>
+> # ============ DIABETES - validate ============
+> print("\nDIABETES validation")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> df_d = df_diabetes.copy()
+> df_d['gender'] = (df_d['gender'] == 'Male').astype(int)
+>
+> df_d_proc = df_d.copy()
+> df_d_proc['age'] = StandardScaler().fit_transform(df_d_proc[['age']])
+> df_d_proc['polyuria'] = df_d_proc['polyuria'] * 3
+> df_d_proc['polydipsia'] = df_d_proc['polydipsia'] * 3
+> df_d_proc['sudden_weight_loss'] = df_d_proc['sudden_weight_loss'] * 2
+> df_d_proc['gender'] = df_d_proc['gender'] * 2
+>
+> labels_d = KMeans(n_clusters=2, n_init=20, random_state=0).fit_predict(df_d_proc.values)
+> print(f"Diabetes counts: {np.bincount(labels_d)}")
+>
+> # Validate: Check separation by polyuria, polydipsia, and combined
+> pp = (df_d['polyuria'] == 1) & (df_d['polydipsia'] == 1)
+> print(f"  Polyuria+Polydipsia patients in cluster 0: {((labels_d==0) & pp).sum()}, cluster 1: {((labels_d==1) & pp).sum()}")
+> print(f"  Neither in cluster 0: {((labels_d==0) & ~(df_d['polyuria']==1) & ~(df_d['polydipsia']==1)).sum()}, cluster 1: {((labels_d==1) & ~(df_d['polyuria']==
+1) & ~(df_d['polydipsia']==1)).sum()}")
+>
+> # ============ SAVE FINAL ============
+> print("\n=== FINAL SAVE ===")
+>
+> # Save diabetes with weighted approach
+> out_d = pd.DataFrame({'pseudo_label': labels_d})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"Diabetes: {np.bincount(labels_d)}")
+>
+> # For heart: pick the best combined score
+> # Based on analysis, use the one with highest combined separation
+> best_h_name = max(candidates.keys(), key=lambda k: (
+>     max(((candidates[k]==0) & (df_heart['ca']>0)).sum(), ((candidates[k]==1) & (df_heart['ca']>0)).sum()) / (df_heart['ca']>0).sum() +
+>     max(((candidates[k]==0) & (df_heart['thal']>=2)).sum(), ((candidates[k]==1) & (df_heart['thal']>=2)).sum()) / (df_heart['thal']>=2).sum() +
+>     max(((candidates[k]==0) & (df_heart['exang']==1)).sum(), ((candidates[k]==1) & (df_heart['exang']==1)).sum()) / (df_heart['exang']==1).sum()
+> ))
+>
+> print(f"Best heart approach: {best_h_name}")
+> best_h = candidates[best_h_name]
+> out_h = pd.DataFrame({'pseudo_label': best_h})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+> print(f"Heart: {np.bincount(best_h)}")
+>
+> print("Done!")
+> EOF
+root@e123fae6e01b:/app# python /app/final2.py
+HEART - detailed analysis
+Traceback (most recent call last):
+  File "/app/final2.py", line 64, in <module>
+    score_reshaped = score.reshape(-1, 1)
+                     ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/pandas/core/generic.py", line 6206, in __getattr__
+    return object.__getattribute__(self, name)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AttributeError: 'Series' object has no attribute 'reshape'. Did you mean: 'shape'?
+root@e123fae6e01b:/app#

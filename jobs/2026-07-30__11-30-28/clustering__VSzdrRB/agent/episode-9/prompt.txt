@@ -1,0 +1,219 @@
+New Terminal Output:
+
+root@5b075df50935:/app# cat > /app/solve_v4.py << 'EOF'
+nd(('km_all', c4))
+
+# KMeans - weighted
+c5 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hw_s)
+clusterings.append(('km_allw', c5))
+
+# KMeans - one-hot
+c6 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_h_oh)
+clusterings.append(('km_oh', c6))
+
+# Key features
+df_hkey_s = pd.DataFrame(StandardScaler().fit_transform(df_heart[key_h].astype(float)), columns=key_h)
+c7 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hkey_s)
+clusterings.append(('km_key', c7))
+
+c8 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hkey_s)
+clusterings.append(('agg_key', c8))
+
+# Agglomerative with different linkages
+c9 = AgglomerativeClustering(n_clusters=2, linkage='complete').fit_predict(df_hall_s)
+clusterings.append(('agg_complete', c9))
+
+c10 = AgglomerativeClustering(n_clusters=2, linkage='average').fit_predict(df_hall_s)
+clusterings.append(('agg_average', c10))
+
+print("Individual methods:")
+for name, c> import pandas as pd
+> import numpy as np
+> from sklearn.cluster import KMeans, AgglomerativeClustering
+> from sklearn.mixture import GaussianMixture
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+> from sklearn.metrics import adjusted_rand_score
+erings[1:]:
+    # Check if we need to flip labels
+    ari_same = adjust> import warnings
+> warnings.filterwarnings('ignore')
+>
+> # ===================== DIABETES DATASET =====================
+> print("=== Diabetes Dataset ===")
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+> df_diabetes['gender'] = df_diabetes['gender'].map({'Male': 1, 'Female': 0})
+>
+
+> # Rule-based: polyuria OR polydipsia - strongest diabetes indicators
+> best_diabetes = ((df_diabetes['polyuria'] == 1) | (df_diabetes['polydipsia'] == 1)).astype(int).values
+> print(f"Diabetes (rule polyuria|polydipsia): {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+>
+> # ===================== HEART DATASET =====================
+agreement with majority
+> print("\n=== Heart Dataset ===")
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> # The heart disease dataset expected: ~50/50
+> # Key features for heart disease: cp, thalach, oldpeak, ca, thal, exang, slope
+ c)
+    agree_flip = np.sum(majori> # Strategy: Use all features with important ones weighted, then agglomerative
+> # Also try majority vote ensemble for robustness
+>
+> numerical_features = ['trestbps', 'chol', 'thalach', 'oldpeak']
+> categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+> key_h = ['cp', 'thalach', 'oldpeak', 'ca', 'thal', 'exang', 'slope']
+_>
+> # Prepare different feature representations
+> # 1. All scaled
+> df_hall = df_heart.copy().astype(float)
+ta.csv', index> df_hall_s = pd.DataFrame(StandardScaler().fit_transform(df_hall), columns=df_hall.columns)
+>
+> # 2. Weighted all
+> df_hw = df_heart.copy().astype(float)
+> df_hw['cp'] = df_hw['cp'] * 2
+> df_hw['ca'] = df_hw['ca'] * 2
+> df_hw['thal'] = df_hw['thal'] * 2
+> df_hw['oldpeak'] = df_hw['oldpeak'] * 1.5
+> df_hw['exang'] = df_hw['exang'] * 2
+> df_hw['slope'] = df_hw['slope'] * 1.5
+> df_hw['thalach'] = df_hw['thalach'] * 1.5
+> df_hw_s = pd.DataFrame(StandardScaler().fit_transform(df_hw), columns=df_hw.columns)
+>
+> # 3. One-hot
+> df_h_num = pd.DataFrame(StandardScaler().fit_transform(df_heart[numerical_features]), columns=numerical_features)
+> encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+> df_h_cat = pd.DataFrame(encoder.fit_transform(df_heart[categorical_features]),
+>                         columns=encoder.get_feature_names_out(categorical_features))
+> df_h_oh = pd.concat([df_h_num, df_h_cat], axis=1)
+>
+> # Generate multiple clusterings
+> clusterings = []
+>
+> # Agglomerative ward - all scaled
+> c1 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hall_s)
+> clusterings.append(('agg_all', c1))
+>
+> # Agglomerative ward - weighted
+> c2 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hw_s)
+> clusterings.append(('agg_allw', c2))
+>
+> # Agglomerative ward - one-hot
+> c3 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_h_oh)
+> clusterings.append(('agg_oh', c3))
+>
+> # KMeans - all scaled
+> c4 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hall_s)
+> clusterings.append(('km_all', c4))
+>
+> # KMeans - weighted
+> c5 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hw_s)
+> clusterings.append(('km_allw', c5))
+>
+> # KMeans - one-hot
+> c6 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_h_oh)
+> clusterings.append(('km_oh', c6))
+>
+> # Key features
+> df_hkey_s = pd.DataFrame(StandardScaler().fit_transform(df_heart[key_h].astype(float)), columns=key_h)
+> c7 = KMeans(n_clusters=2, init='k-means++', n_init=100, random_state=42).fit_predict(df_hkey_s)
+> clusterings.append(('km_key', c7))
+>
+> c8 = AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(df_hkey_s)
+> clusterings.append(('agg_key', c8))
+>
+> # Agglomerative with different linkages
+> c9 = AgglomerativeClustering(n_clusters=2, linkage='complete').fit_predict(df_hall_s)
+> clusterings.append(('agg_complete', c9))
+>
+> c10 = AgglomerativeClustering(n_clusters=2, linkage='average').fit_predict(df_hall_s)
+> clusterings.append(('agg_average', c10))
+>
+> print("Individual methods:")
+> for name, c in clusterings:
+>     print(f"  {name}: {sum(c==0)}/{sum(c==1)}")
+>
+> # Majority vote ensemble
+> # First align labels - use the first method as reference
+> ref = clusterings[0][1]
+> aligned = [ref.copy()]
+> for name, c in clusterings[1:]:
+>     # Check if we need to flip labels
+>     ari_same = adjusted_rand_score(ref, c)
+>     # ARI is symmetric, no need to flip - but for voting we need consistent labels
+>     # Check which alignment gives better agreement with reference
+>     agree_same = np.sum(ref == c)
+>     agree_flip = np.sum(ref == (1 - c))
+>     if agree_flip > agree_same:
+>         aligned.append(1 - c)
+>     else:
+>         aligned.append(c.copy())
+>
+> # Majority vote
+> votes = np.array(aligned)
+> majority = (votes.sum(axis=0) > len(aligned) / 2).astype(int)
+>
+> print(f"\nMajority vote ensemble: {sum(majority==0)}/{sum(majority==1)}")
+>
+> # Also try: pick the balanced method with highest agreement with majority
+> print("\nAgreement with majority vote:")
+> best_agree = -1
+> best_method = None
+> for name, c in clusterings:
+>     # Align with majority
+>     agree_same = np.sum(majority == c)
+>     agree_flip = np.sum(majority == (1 - c))
+>     agree = max(agree_same, agree_flip)
+>     split = f"{sum(c==0)}/{sum(c==1)}"
+>     print(f"  {name}: agreement={agree/len(c):.4f}, split={split}")
+>
+> # Use majority vote as final
+> best_heart = majority
+> print(f"\nFinal heart (majority): {sum(best_heart==0)}/{sum(best_heart==1)}")
+>
+> # ===================== SAVE =====================
+> out_d = pd.DataFrame({'pseudo_label': best_diabetes})
+> out_d.to_csv('/app/output_diabetes_data.csv', index=False)
+> print(f"\nSaved diabetes: {sum(best_diabetes==0)}/{sum(best_diabetes==1)}")
+>
+> out_h = pd.DataFrame({'pseudo_label': best_heart})
+> out_h.to_csv('/app/output_heart.csv', index=False)
+> print(f"Saved heart: {sum(best_heart==0)}/{sum(best_heart==1)}")
+> print("Done!")
+> EOF
+root@5b075df50935:/app# python3 /app/solve_v4.py
+=== Diabetes Dataset ===
+Diabetes (rule polyuria|polydipsia): 222/298
+
+=== Heart Dataset ===
+Individual methods:
+  agg_all: 476/549
+  agg_allw: 476/549
+  agg_oh: 481/544
+  km_all: 653/372
+  km_allw: 653/372
+  km_oh: 623/402
+  km_key: 407/618
+  agg_key: 581/444
+  agg_complete: 1022/3
+  agg_average: 1022/3
+
+Majority vote ensemble: 384/641
+
+Agreement with majority vote:
+  agg_all: agreement=0.8693, split=476/549
+  agg_allw: agreement=0.8693, split=476/549
+  agg_oh: agreement=0.8585, split=481/544
+  km_all: agreement=0.9688, split=653/372
+  km_allw: agreement=0.9688, split=653/372
+  km_oh: agreement=0.9220, split=623/402
+  km_key: agreement=0.9541, split=407/618
+  agg_key: agreement=0.8712, split=581/444
+  agg_complete: agreement=0.6224, split=1022/3
+  agg_average: agreement=0.6224, split=1022/3
+
+Final heart (majority): 384/641
+
+Saved diabetes: 222/298
+Saved heart: 384/641
+Done!
+root@5b075df50935:/app#

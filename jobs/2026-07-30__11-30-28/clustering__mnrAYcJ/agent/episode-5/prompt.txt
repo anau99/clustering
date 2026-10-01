@@ -1,0 +1,222 @@
+New Terminal Output:
+
+    return model.fit_predict(X)root@25a96eac46b4:/app# cat > /app/solve2.py << 'EOF'
+> import pandas as pd
+> import numpy as np
+> import sys
+> sys.path.insert(0, '/app/src')
+>
+_> from sklearn.cluster import KMeans, AgglomerativeClustering, BisectingKMeans
+> from sklearn.mixture import GaussianMixture
+> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+> from sklearn.decomposition import PCA
+>
+> # ============ DIABETES DATASET ============
+> print("="*60)
+> print("Processing diabetes_data.csv...")
+> print("="*60)
+> df_diabetes = pd.read_csv('/app/diabetes_data.csv')
+with(col)]
+            for m in matching:
+                result[m] = result[m] * w
+    return result.values
+
+# Strategy 2: Keep categorical as ordinal, standardize everything
+def prep_heart_ordinal(df, weight_dict=None):
+    d = df.copy()>
+
+> # Encode gender
+> df_diab = df_diabetes.copy()
+> df_diab['gender'] = df_diab['gender'].map({'Male': 1, 'Female': 0})
+    if weig>
+> # Key insight: polyuria and polydipsia are the strongest predictors of diabetes
+> # Let's try different feature weighting strategies
+>
+> # Strategy 1: Use all features with standard scaling on age
+> X1 = df_diab.copy()
+> scaler = StandardScaler()
+> X1['age'] = scaler.fit_transform(X1[['age']])
+> X1 = X1.values
+>
+> # Strategy 2: Weight polyuria and polydipsia heavily
+> X2 = df_diab.copy()
+> X2['age'] = scaler.fit_transform(X2[['age']])
+> # Weight key features
+> X2['polyuria'] = X2['polyuria'] * 3
+> X2['polydipsia'] = X2['polydipsia'] * 3
+> X2 = X2.values
+>
+> # Strategy 3: Just use polyuria + polydipsia + a few key features
+> X3 = df_diab[['polyuria', 'polydipsia', 'sudden_weight_loss', 'gender', 'irritability', 'partial_paresis', 'polyphagia']].copy()
+> X3 = X3.values
+>
+> # Strategy 4: Weight polyuria and polydipsia even more
+> X4 = df_diab.copy()
+> X4['age'] = scaler.fit_transform(X4[['age']])
+> X4['polyuria'] = X4['polyuria'] * 5
+> X4['polydipsia'] = X4['polydipsia'] * 5
+> X4 = X4.values
+>
+> # Strategy 5: Simple sum of symptoms as a single feature approach
+> X5 = df_diab.copy()
+> X5['age'] = scaler.fit_transform(X5[['age']])
+> X5['polyuria'] = X5['polyuria'] * 2
+> X5['polydipsia'] = X5['polydipsia'] * 2
+> X5['sudden_weight_loss'] = X5['sudden_weight_loss'] * 1.5
+> X5['irritability'] = X5['irritability'] * 1.5
+ct2),
+  > X5['partial_paresis'] = X5['partial_paresis'] * 1.5
+> X5 = X5.values
+>
+> strategies_diab = {'X1_all': X1, 'X2_weight_poly': X2, 'X3_subset': X3, 'X4_heavy_weight': X4, 'X5_moderate_weight': X5}
+>
+> best_diab_labels = None
+> best_diab_name = ""
+>
+> for name, X in strategies_diab.items():
+>     for algo_name, algo_func in [
+>         ('KMeans', lambda X: KMeans(n_clusters=2, init='k-means++', n_init=10, random_state=42).fit_predict(X)),
+>         ('GMM', lambda X: GaussianMixture(n_components=2, covariance_type='full', random_state=42).fit_predict(X)),
+>         ('Agglo', lambda X: AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(X)),
+>         ('Bisecting', lambda X: BisectingKMeans(n_clusters=2, random_state=42).fit_predict(X)),
+>     ]:
+>         labels = algo_func(X)
+>         counts = np.bincount(labels)
+>         ratio = min(counts) / max(counts)
+>         print(f"  {name} + {algo_name}: clusters={counts}, ratio={ratio:.3f}")
+>
+> # Based on domain knowledge, the diabetes dataset should have roughly 200 positive, 320 negative
+> # (or flipped). Let's use the strategies that give ~200/320 split.
+> # Strategy 2 with KMeans seemed to work well.
+>
+> # Let's go with weighted polyuria/polydipsia + KMeans
+> print("\nUsing Strategy 2 (weighted polyuria+polydipsia) + KMeans for diabetes")
+> labels_diab = KMeans(n_clusters=2, init='k-means++', n_init=10, random_state=42).fit_predict(X2)
+> print(f"Final diabetes clusters: {np.bincount(labels_diab)}")
+>
+> diab_output = pd.DataFrame({'pseudo_label': labels_diab})
+> diab_output.to_csv('/app/output_diabetes_data.csv', index=False)
+>
+> # ============ HEART DATASET ============
+> print("\n" + "="*60)
+> print("Processing heart.csv...")
+> print("="*60)
+> df_heart = pd.read_csv('/app/heart.csv')
+>
+> numerical_cols = ['trestbps', 'chol', 'thalach', 'oldpeak']
+> categorical_cols = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+>
+> # Strategy 1: One-hot encode all categoricals, standardize numericals
+> def prep_heart_onehot(df, weight_dict=None):
+>     d = df.copy()
+>     # One-hot encode categorical
+>     cat_df = pd.get_dummies(d[categorical_cols].astype(str), drop_first=False)
+>     # Standardize numerical
+>     num_df = d[numerical_cols].copy()
+>     scaler = StandardScaler()
+>     num_df = pd.DataFrame(scaler.fit_transform(num_df), columns=numerical_cols)
+>     result = pd.concat([num_df, cat_df.reset_index(drop=True)], axis=1)
+>     if weight_dict:
+>         for col, w in weight_dict.items():
+>             matching = [c for c in result.columns if c.startswith(col)]
+>             for m in matching:
+>                 result[m] = result[m] * w
+>     return resu
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+ 2, 'oldpeak': 2, 'ca': 2, 'thal': 2, 'exang': 2, 'slope': 1.5}
+> weight_dict2 = {'cp': 3, 'thalach': 2, 'oldpeak': 2, 'ca': 3, 'thal': 3, 'exang': 2, 'slope': 2}
+>
+> heart_strategies = {
+>     'onehot_noweight': prep_heart_onehot(df_heart),
+>     'onehot_weight1': prep_heart_onehot(df_heart, weight_dict1),
+>     'onehot_weight2': prep_heart_onehot(df_heart, weight_dict2),
+>     'ordinal_noweight': prep_heart_ordinal(df_heart),
+>     'ordinal_weight1': prep_heart_ordinal(df_heart, {'cp': 2, 'thalach': 2, 'oldpeak': 2, 'ca': 2, 'thal': 2, 'exang': 2}),
+>     'subset': prep_heart_subset(df_heart),
+> }
+>
+> for name, X in heart_strategies.items():
+>     for algo_name, algo_func in [
+>         ('KMeans', lambda X: KMeans(n_clusters=2, init='k-means++', n_init=10, random_state=42).fit_predict(X)),
+>         ('GMM', lambda X: GaussianMixture(n_components=2, covariance_type='full', random_state=42).fit_predict(X)),
+>         ('Agglo', lambda X: AgglomerativeClustering(n_clusters=2, linkage='ward').fit_predict(X)),
+>         ('Bisecting', lambda X: BisectingKMeans(n_clusters=2, random_state=42).fit_predict(X)),
+>     ]:
+>         labels = algo_func(X)
+>         counts = np.bincount(labels)
+>         ratio = min(counts) / max(counts)
+>         print(f"  {name} + {algo_name}: clusters={counts}, ratio={ratio:.3f}")
+>
+> # Based on the heart disease dataset, typically about 500/525 split (roughly equal)
+> # Let's try the weighted onehot approach with KMeans
+> print("\nUsing onehot_weight2 + KMeans for heart")
+> X_heart_final = prep_heart_onehot(df_heart, weight_dict2)
+> labels_heart = KMeans(n_clusters=2, init='k-means++', n_init=10, random_state=42).fit_predict(X_heart_final)
+> print(f"Final heart clusters: {np.bincount(labels_heart)}")
+>
+> heart_output = pd.DataFrame({'pseudo_label': labels_heart})
+> heart_output.to_csv('/app/output_heart.csv', index=False)
+>
+> print("\nDone!")
+> EOF
+root@25a96eac46b4:/app# python3 /app/solve2.py
+============================================================
+Processing diabetes_data.csv...
+============================================================
+  X1_all + KMeans: clusters=[315 205], ratio=0.651
+  X1_all + GMM: clusters=[183 337], ratio=0.543
+  X1_all + Agglo: clusters=[368 152], ratio=0.413
+  X1_all + Bisecting: clusters=[303 217], ratio=0.716
+  X2_weight_poly + KMeans: clusters=[232 288], ratio=0.806
+  X2_weight_poly + GMM: clusters=[287 233], ratio=0.812
+  X2_weight_poly + Agglo: clusters=[298 222], ratio=0.745
+  X2_weight_poly + Bisecting: clusters=[288 232], ratio=0.806
+  X3_subset + KMeans: clusters=[283 237], ratio=0.837
+  X3_subset + GMM: clusters=[258 262], ratio=0.985
+  X3_subset + Agglo: clusters=[309 211], ratio=0.683
+  X3_subset + Bisecting: clusters=[236 284], ratio=0.831
+  X4_heavy_weight + KMeans: clusters=[262 258], ratio=0.985
+  X4_heavy_weight + GMM: clusters=[262 258], ratio=0.985
+  X4_heavy_weight + Agglo: clusters=[287 233], ratio=0.812
+  X4_heavy_weight + Bisecting: clusters=[298 222], ratio=0.745
+  X5_moderate_weight + KMeans: clusters=[259 261], ratio=0.992
+  X5_moderate_weight + GMM: clusters=[235 285], ratio=0.825
+  X5_moderate_weight + Agglo: clusters=[265 255], ratio=0.962
+  X5_moderate_weight + Bisecting: clusters=[257 263], ratio=0.977
+
+Using Strategy 2 (weighted polyuria+polydipsia) + KMeans for diabetes
+Final diabetes clusters: [232 288]
+
+============================================================
+Processing heart.csv...
+============================================================
+  onehot_noweight + KMeans: clusters=[619 406], ratio=0.656
+  onehot_noweight + GMM: clusters=[144 881], ratio=0.163
+  onehot_noweight + Agglo: clusters=[481 544], ratio=0.884
+  onehot_noweight + Bisecting: clusters=[401 624], ratio=0.643
+  onehot_weight1 + KMeans: clusters=[427 598], ratio=0.714
+  onehot_weight1 + GMM: clusters=[144 881], ratio=0.163
+  onehot_weight1 + Agglo: clusters=[458 567], ratio=0.808
+  onehot_weight1 + Bisecting: clusters=[413 612], ratio=0.675
+  onehot_weight2 + KMeans: clusters=[589 436], ratio=0.740
+  onehot_weight2 + GMM: clusters=[144 881], ratio=0.163
+  onehot_weight2 + Agglo: clusters=[591 434], ratio=0.734
+  onehot_weight2 + Bisecting: clusters=[380 645], ratio=0.589
+  ordinal_noweight + KMeans: clusters=[653 372], ratio=0.570
+  ordinal_noweight + GMM: clusters=[497 528], ratio=0.941
+  ordinal_noweight + Agglo: clusters=[476 549], ratio=0.867
+  ordinal_noweight + Bisecting: clusters=[403 622], ratio=0.648
+  ordinal_weight1 + KMeans: clusters=[373 652], ratio=0.572
+  ordinal_weight1 + GMM: clusters=[497 528], ratio=0.941
+  ordinal_weight1 + Agglo: clusters=[504 521], ratio=0.967
+  ordinal_weight1 + Bisecting: clusters=[389 636], ratio=0.612
+  subset + KMeans: clusters=[411 614], ratio=0.669
+  subset + GMM: clusters=[443 582], ratio=0.761
+  subset + Agglo: clusters=[701 324], ratio=0.462
+  subset + Bisecting: clusters=[411 614], ratio=0.669
+
+Using onehot_weight2 + KMeans for heart
+Final heart clusters: [589 436]
+
+Done!
+root@25a96eac46b4:/app#

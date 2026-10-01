@@ -1,0 +1,62 @@
+New Terminal Output:
+
+PY
+/app/run_cluster.py:17: Pandas4Warning: For backward compatibility, 'str' dtypes are included by select_dtypes when 'object' dtype is specified. This behavior i
+s deprecated and will be removed in a future version. Explicitly pass 'str' to `include` to select them, or to `exclude` to remove them and silence this warning
+.
+See https://pandas.pydata.org/docs/user_guide/migration-3-strings.html#string-migration-select-dtypes for details on how to write code that works with pandas 2
+and 3.
+  cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+/app/diabetes_data.csv -> /app/output_diabetes_data.csv | model=kmeans silhouette=0.187668019493627 | X_shape=(520, 17) | labels=[np.int64(0), np.int64(1)]
+/app/heart.csv -> /app/output_heart.csv | model=kmeans silhouette=0.16865253560023316 | X_shape=(1025, 13) | labels=[np.int64(0), np.int64(1)]
+root@28ff7fec204a:/app# python3 - <<'PY'
+> import pandas as pd
+> for p in ['/app/output_diabetes_data.csv','/app/output_heart.csv']:
+>     df=pd.read_csv(p)
+>     print('\n',p,df.shape)
+>     print('cols:',df.columns.tolist())
+>     print('unique:',sorted(df['pseudo_label'].unique().tolist()))
+>     print(df.head())
+> PY
+
+ /app/output_diabetes_data.csv (520, 1)
+cols: ['pseudo_label']
+unique: [0, 1]
+   pseudo_label
+0             1
+1             1
+2             1
+3             1
+4             0
+
+ /app/output_heart.csv (1025, 1)
+cols: ['pseudo_label']
+unique: [0, 1]
+   pseudo_label
+0             1
+1             0
+2             0
+3             1
+4             0
+root@28ff7fec204a:/app# ls -la /app | egrep 'output_|run_cluster.py' || true
+-rw-r--r-- 1 root root  1053 Jul 30 05:01 output_diabetes_data.csv
+-rw-r--r-- 1 root root  2063 Jul 30 05:02 output_heart.csv
+-rw-r--r-- 1 root root  3279 Jul 30 05:01 run_cluster.py
+root@28ff7fec204a:/app# python3 /app/run_cluster.py 2>&1 | tee /app/run_cluster.log
+ls -la /app/output_diabetes_data.csv /app/output_heart.csv
+head -n 5 /app/output_diabetes_data.csv && echo '---' && head -n 5 /app/output_heart.csv
+/app/run_cluster.py:17: Pandas4Warning: For backward compatibility, 'str' dtypes are included by select_dtypes when 'object' dtype is specified. This behavior i
+s deprecated and will be removed in a future version. Explicitly pass 'str' to `include` to select them, or to `exclude` to remove them and silence this warning
+.
+See https://pandas.pydata.org/docs/user_guide/migration-3-strings.html#string-migration-select-dtypes for details on how to write code that works with pandas 2
+and 3.
+  cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+python3 - <<'PY'
+import pandas as pd
+for p in ['/app/output_diabetes_data.csv','/app/output_heart.csv']:
+    df=pd.read_csv(p)
+    assert list(df.columns)==['pseudo_label']
+    u=sorted(df['pseudo_label'].unique().tolist())
+    print(p, 'shape', df.shape, 'unique', u)
+PY
+

@@ -1,0 +1,45 @@
+New Terminal Output:
+
+root@e8904edca287:/app# head -10 /app/output_diabetes_data.csv
+pseudo_label
+0
+1
+0
+1
+0
+0
+0
+0
+0
+root@e8904edca287:/app# head -10 /app/output_heart.csv
+pseudo_label
+1
+0
+0
+1
+0
+0
+0
+0
+1
+root@e8904edca287:/app# wc -l /app/output_diabetes_data.csv /app/output_heart.csv
+ 521 /app/output_diabetes_data.csv
+1026 /app/output_heart.csv
+1547 total
+root@e8904edca287:/app# python3 -c "import pandas as pd; df=pd.read_csv('/app/output_diabetes_data.csv'); print(df.columns.tolist()); print(df['pseudo_label'].v
+alue_counts()); print(len(df))"
+['pseudo_label']
+pseudo_label
+0    298
+1    222
+Name: count, dtype: int64
+520
+root@e8904edca287:/app# python3 -c "import pandas as pd; df=pd.read_csv('/app/output_heart.csv'); print(df.columns.tolist()); print(df['pseudo_label'].value_cou
+nts()); print(len(df))"
+['pseudo_label']
+pseudo_label
+1    618
+0    407
+Name: count, dtype: int64
+1025
+root@e8904edca287:/app#
